@@ -188,7 +188,7 @@
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>0</useUlib>
+            <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
@@ -423,9 +423,49 @@
           <GroupName>app</GroupName>
           <Files>
             <File>
+              <FileName>debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\debug.c</FilePath>
+            </File>
+            <File>
+              <FileName>watchdog.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\watchdog.c</FilePath>
+            </File>
+            <File>
               <FileName>rssi_signal_ctrl.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\app\rssi_signal_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>sync_head_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\sync_head_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>pin30_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\pin30_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>pin12_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\pin12_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>pin25_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\pin25_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>pin24_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\pin24_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>pin27_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\pin27_ctrl.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -10,11 +10,13 @@
 #define _CONFIG_H_
  
 #include <stdint.h> 
- 
-#define CONFIG_VERSION            1     // 版本号
 
-#define CONFIG_DEBUG_EN           0     // DEBUG调试
- 
+#define CONFIG_PROJECT_NAME       "VIDEO"    // 项目名称
+#define CONFIG_VERSION            1          // 版本号
+
+
+#define CONFIG_DEBUG_EN           1          // DEBUG调试
+#define CONFIG_WATCHDOG_EN        1          // 看门狗功能
 
 #ifndef NULL
 #define NULL 0

@@ -16,7 +16,7 @@
  *  @param   无 
  *  @return  返回值 @see CONFIG_RESULT_T
  *  @note    使用该模块的其他功能前调用以使初始化模块
-*/
+ */
 extern CONFIG_RESULT_T rssi_signal_ctrl_init(void);
 
 #endif

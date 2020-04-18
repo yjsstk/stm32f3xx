@@ -12,6 +12,8 @@
 
 #include "config.h"
 
+#define  SYNC_KEEP_OUTPUT_MS    (5 * 1000)
+
 /** @brief   该模块的应用初始化函数 
  *  @param   无 
  *  @return  返回值 @see CONFIG_RESULT_T

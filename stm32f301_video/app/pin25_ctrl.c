@@ -13,6 +13,7 @@
 #include "stm32f3xx_hal_gpio.h"
 #include "rssi_signal_ctrl.h"
 #include "pin24_ctrl.h"
+#include "systick.h"
 
 static volatile uint16_t pin25_ms_count    = 0;
 static volatile uint16_t pin25_ctrl_output = 0;
@@ -22,7 +23,7 @@ static volatile uint16_t pin25_ctrl_output = 0;
  *  @return  无
  *  @note    
  */
-void pin25_1ms_callback(void *pcontent)
+static void pin25_1ms_callback(void *pcontent)
 {
 	pin25_ms_count++;
 	
@@ -37,12 +38,12 @@ void pin25_1ms_callback(void *pcontent)
 	}
 }
 
-/** @brief   中断回调函数
+/** @brief   中断调用函数
  *  @param   pcontent[in] 
  *  @return  无
  *  @note    
  */
-void pin25_exti15_callback(void *pcontent)
+void pin25_exti15_interrupt_handler(void *pcontent)
 {
 	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == GPIO_PIN_RESET)
 	{
@@ -81,6 +82,8 @@ CONFIG_RESULT_T pin25_ctrl_init(void)
 
 	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
 	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+	
+	systick_1ms_func_reg(pin25_1ms_callback);
 	
 	return RESULT_SUCCESS;
 }

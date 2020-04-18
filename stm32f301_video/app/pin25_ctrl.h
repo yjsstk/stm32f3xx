@@ -21,7 +21,7 @@
  *  @return  无
  *  @note    
  */
-extern void pin25_exti15_callback(void *pcontent);
+extern void pin25_exti15_interrupt_handler(void *pcontent);
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 

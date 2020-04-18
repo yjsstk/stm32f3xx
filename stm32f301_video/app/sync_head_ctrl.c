@@ -13,9 +13,38 @@
 #endif
 #include "debug.h"
 
+#include <stdint.h>
 #include "sync_head_ctrl.h"
+#include "systick.h"
 
- 
+static uint16_t sync_keep_output_ms;
+
+/** @brief   检测到同步头信号回调
+ *  @param   pcontent[in] 
+ *  @return  无
+ *  @note    
+ */
+static void sync_detect_callbacks(void *pcontent)
+{
+}
+
+/** @brief   1MS回调函数
+ *  @param   pcontent[in] 
+ *  @return  无
+ *  @note    
+ */
+static void sync_1ms_callback(void *pcontent)
+{
+	if (sync_keep_output_ms < UINT16_MAX)
+	{
+		sync_keep_output_ms++;
+	}
+	
+	// 停止同步头信号输出
+	if (sync_keep_output_ms == SYNC_KEEP_OUTPUT_MS)
+	{
+	}
+}
  
 /** @brief   该模块的应用初始化函数 
  *  @param   无 
@@ -24,5 +53,7 @@
  */
 CONFIG_RESULT_T sync_head_ctrl_init(void)
 {
+	systick_1ms_func_reg(sync_1ms_callback);
+	
 	return RESULT_SUCCESS;
 }

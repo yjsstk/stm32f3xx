@@ -23,7 +23,7 @@ void pin12_set_video_ctrl(PIN12_VIDEO_SEL_T sel)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 	}
-	else
+	else if (sel == PIN12_SEL_VI2_BOT)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 	}

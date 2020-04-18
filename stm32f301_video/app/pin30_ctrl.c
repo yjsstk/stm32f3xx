@@ -25,7 +25,7 @@ void pin30_set_video_ctrl(PIN30_VIDEO_CTRL_T ctrl)
 	{
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
 	}
-	else
+	else if (ctrl == PIN30_VIDEO_CTRL_BY_SW)
 	{
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
 	}

@@ -16,10 +16,11 @@
 
 #include "stm32f3xx_hal.h"
 #include "watchdog.h"
-
-
 #include "rssi_signal_ctrl.h"
 #include "sync_head_ctrl.h"
+#include "pin30_ctrl.h"
+#include "pin12_ctrl.h"
+#include "pin25_ctrl.h"
 
 int main(void)
 {
@@ -33,6 +34,9 @@ int main(void)
 	DEBUG_INFO("project name: %s", CONFIG_PROJECT_NAME);
 	DEBUG_INFO("version: %d", CONFIG_VERSION);
 	
+	pin12_ctrl_init();
+	pin30_ctrl_init();
+	pin25_ctrl_init();
 	rssi_signal_ctrl_init();
 	sync_head_ctrl_init();
 	
@@ -41,7 +45,7 @@ int main(void)
 	#endif
 	while (1)
 	{
-		
+		rssi_event_loop();
 		
 		#if (CONFIG_WATCHDOG_EN == 1)
 		watchdog_feed();

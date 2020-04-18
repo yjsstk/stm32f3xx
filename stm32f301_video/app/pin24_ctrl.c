@@ -9,8 +9,15 @@
  */
 
 #include "pin24_ctrl.h"
-#include "stm32f3xx_hal.h"
-#include "stm32f3xx_hal_gpio.h"
+
+/** @brief   GPIO输出控制
+ *  @param   state[in] @see GPIO_PinState
+ *  @return  无
+ */
+inline void pin24_output_ctrl(GPIO_PinState pin_state)
+{
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_14, pin_state);
+}
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 

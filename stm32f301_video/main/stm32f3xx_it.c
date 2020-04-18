@@ -172,8 +172,8 @@ void EXTI15_10_IRQHandler(void)
 {
 	if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_15) == SET)
 	{
-		pin25_exti15_callback(NULL);
 		__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_15);
+		pin25_exti15_callback(NULL);
 	}
 }
 

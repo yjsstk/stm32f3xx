@@ -21,6 +21,7 @@
 #include "pin30_ctrl.h"
 #include "pin12_ctrl.h"
 #include "pin25_ctrl.h"
+#include "pin24_ctrl.h"
 
 int main(void)
 {
@@ -37,6 +38,7 @@ int main(void)
 	pin12_ctrl_init();
 	pin30_ctrl_init();
 	pin25_ctrl_init();
+	pin24_ctrl_init();
 	rssi_signal_ctrl_init();
 	sync_head_ctrl_init();
 	

@@ -11,6 +11,31 @@
 #include "pin25_ctrl.h"
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_gpio.h"
+#include "rssi_signal_ctrl.h"
+#include "pin24_ctrl.h"
+
+static volatile uint16_t pin25_ms_count    = 0;
+static volatile uint16_t pin25_ctrl_output = 0;
+
+/** @brief   1MS回调函数
+ *  @param   pcontent[in] 
+ *  @return  无
+ *  @note    
+ */
+void pin25_1ms_callback(void *pcontent)
+{
+	pin25_ms_count++;
+	
+	if (pin25_ctrl_output < UINT16_MAX)
+	{
+		pin25_ctrl_output++;
+	}
+	
+	if (pin25_ctrl_output == PIN25_MS_COUNT)
+	{
+		pin24_output_ctrl(GPIO_PIN_RESET);
+	}
+}
 
 /** @brief   中断回调函数
  *  @param   pcontent[in] 
@@ -19,6 +44,22 @@
  */
 void pin25_exti15_callback(void *pcontent)
 {
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == GPIO_PIN_RESET)
+	{
+		pin25_ms_count = 0;
+	}
+	else 
+	{
+		if ((pin25_ms_count >= PIN25_MS_COUNT - PIN25_COUNT_ERR) 
+		 || (pin25_ms_count <= PIN25_MS_COUNT + PIN25_COUNT_ERR))
+		{
+			if (rssi_get_is_both_weak() == true)
+			{
+				pin25_ctrl_output = 0;
+				pin24_output_ctrl(GPIO_PIN_SET);
+			}
+		}
+	}
 }
 
 /** @brief   该模块的应用初始化函数 

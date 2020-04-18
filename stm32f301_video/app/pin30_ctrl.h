@@ -14,7 +14,19 @@
 
 #include "config.h"
 
+typedef enum
+{
+	PIN30_VIDEO_CTRL_BY_HW,
+	PIN30_VIDEO_CTRL_BY_SW,
+}PIN30_VIDEO_CTRL_T;
 
+/** @brief   视频处理控制
+ *  @param   ctrl[in] @see PIN30_VIDEO_CTRL_T
+ *  @return  无 
+ *  @note    PIN30视频处理选择
+ */
+extern void pin30_set_video_ctrl(PIN30_VIDEO_CTRL_T ctrl);
+	
 /** @brief   该模块的应用初始化函数 
  *  @param   无 
  *  @return  返回值 @see CONFIG_RESULT_T

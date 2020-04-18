@@ -12,15 +12,19 @@
 #define DEBUG_INFO_EN       1
 #define DEBUG_MODULE_NAME   "main"
 #endif
-
-#include "stm32f301x8.h"
 #include "debug.h"
+
+#include "stm32f3xx_hal.h"
 #include "watchdog.h"
+
+
 #include "rssi_signal_ctrl.h"
 #include "sync_head_ctrl.h"
 
 int main(void)
 {
+	HAL_Init();
+	
 	#if (CONFIG_DEBUG_EN == 1)
 	debug_init();
 	#endif

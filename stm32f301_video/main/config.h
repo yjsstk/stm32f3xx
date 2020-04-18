@@ -8,8 +8,6 @@
  
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
- 
-#include <stdint.h> 
 
 #define CONFIG_PROJECT_NAME       "VIDEO"    // 项目名称
 #define CONFIG_VERSION            1          // 版本号
@@ -17,15 +15,24 @@
 
 #define CONFIG_DEBUG_EN           1          // DEBUG调试
 #define CONFIG_WATCHDOG_EN        1          // 看门狗功能
-
-#ifndef NULL
-#define NULL 0
-#endif
  
 typedef enum
 {
 	RESULT_SUCCESS,
 	RESULT_NULL,
+	RESULT_INIT_ERR,
 }CONFIG_RESULT_T;
+
+#ifndef NULL
+#define NULL  0
+#endif
+
+#ifndef TRUE
+#define TRUE  1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
 
 #endif

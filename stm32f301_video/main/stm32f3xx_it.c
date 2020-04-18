@@ -21,7 +21,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f3xx_it.h"
-   
+#include "pin25_ctrl.h"
+#include "stm32f3xx_hal.h"
+#include "stm32f3xx_hal_gpio.h"
+
 /** @addtogroup STM32F3xx_HAL_Examples
   * @{
   */
@@ -158,6 +161,20 @@ void USARTx_IRQHandler(void)
 void EXTI0_IRQHandler(void)
 {
 //  HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
+}
+
+/**
+  * @brief  This function handles external line 15~10 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void EXTI15_10_IRQHandler(void)
+{
+	if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_15) == SET)
+	{
+		pin25_exti15_callback(NULL);
+		__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_15);
+	}
 }
 
 /**

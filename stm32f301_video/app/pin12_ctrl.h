@@ -12,6 +12,18 @@
 
 #include "config.h"
 
+typedef enum
+{
+	PIN12_SEL_VI1_TOP,
+	PIN12_SEL_VI2_BOT,
+}PIN12_VIDEO_SEL_T;
+
+/** @brief   设置视频选择控制
+ *  @param   sel[in] @see PIN12_VIDEO_SEL_T
+ *  @return  无 
+ *  @note    PIN12视频控制选择
+ */
+extern void pin12_set_video_ctrl(PIN12_VIDEO_SEL_T sel);
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 

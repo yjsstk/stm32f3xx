@@ -9,7 +9,8 @@
  */
 
 #include "pin24_ctrl.h"
-
+#include "stm32f3xx_hal.h"
+#include "stm32f3xx_hal_gpio.h"
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 
@@ -18,6 +19,19 @@
  */
 CONFIG_RESULT_T pin24_ctrl_init(void)
 {
+	GPIO_InitTypeDef  GPIO_InitStruct;
+	
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+
+	GPIO_InitStruct.Pin   = GPIO_PIN_14;
+	GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull  = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct); 
+	
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_14, GPIO_PIN_RESET);
+	
 	return RESULT_SUCCESS;
 }
 

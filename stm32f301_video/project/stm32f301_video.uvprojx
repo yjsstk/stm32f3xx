@@ -462,6 +462,16 @@
               <FileType>1</FileType>
               <FilePath>..\st_lib\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_tim_ex.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f3xx_hal_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\st_lib\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f3xx_hal_adc_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\st_lib\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_adc_ex.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

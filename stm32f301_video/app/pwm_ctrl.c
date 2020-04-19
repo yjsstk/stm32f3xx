@@ -48,6 +48,66 @@ CONFIG_RESULT_T pwm_ctrl_init(void)
 
 	if (HAL_TIM_PWM_Init(&TimHandle) != HAL_OK)
 	{
+		return RESULT_ERROR;
+	}
+	
+	TIM_OC_InitTypeDef sConfig;
+	
+	sConfig.OCMode       = TIM_OCMODE_PWM1;
+	sConfig.OCPolarity   = TIM_OCPOLARITY_HIGH;
+	sConfig.OCFastMode   = TIM_OCFAST_DISABLE;
+	sConfig.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+	sConfig.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+
+	sConfig.OCIdleState  = TIM_OCIDLESTATE_RESET;
+
+	sConfig.Pulse = 100;
+	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_1) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
+
+	/* Set the pulse value for channel 2 */
+	sConfig.Pulse = 100;
+	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_2) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
+
+	/* Set the pulse value for channel 3 */
+	sConfig.Pulse = 100;
+	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_3) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
+
+	/* Set the pulse value for channel 4 */
+	sConfig.Pulse = 100;
+	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_4) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
+
+	/*##-3- Start PWM signals generation #######################################*/
+	/* Start channel 1 */
+	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_1) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
+	/* Start channel 2 */
+	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_2) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
+	/* Start channel 3 */
+	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_3) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
+	/* Start channel 4 */
+	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_4) != HAL_OK)
+	{
+		return RESULT_ERROR;
 	}
   
 	return RESULT_SUCCESS;

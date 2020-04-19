@@ -522,6 +522,11 @@
               <FileType>1</FileType>
               <FilePath>..\app\pwm_ctrl.c</FilePath>
             </File>
+            <File>
+              <FileName>adc_rssi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\adc_rssi.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

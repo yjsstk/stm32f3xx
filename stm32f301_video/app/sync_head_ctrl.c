@@ -14,10 +14,47 @@
 #include "debug.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "sync_head_ctrl.h"
 #include "systick.h"
+#include "pwm_ctrl.h"
 
 static uint16_t sync_keep_output_ms;
+
+typedef struct
+{
+	bool     field_even;       // 偶数场标志
+	uint16_t pulse_count;      // 脉冲计数
+	uint16_t max_row_pulse;    // 行脉冲总数
+	uint16_t max_solt_pulse;   // 槽脉冲个数
+}sync_ctrl_t;
+
+static sync_ctrl_t sync_pal_ctrl=
+{
+	.field_even     = false,
+	.pulse_count    = 0,
+	.max_row_pulse  = SYNC_PAL_FIELD_ROW,
+	.max_solt_pulse = SYNC_PAL_SLOT_PULSE,
+};
+
+static sync_ctrl_t sync_ntsc_ctrl=
+{
+	.field_even     = false,
+	.pulse_count    = 0,
+	.max_row_pulse  = SYNC_NTSC_FIELD_ROW,
+	.max_solt_pulse = SYNC_NTSC_SLOT_PULSE,
+};
+
+static sync_ctrl_t *psync_ctrl = &sync_ntsc_ctrl;
+
+/** @brief   PWM中断回调函数
+ *  @param   pcontent[in] 
+ *  @return  无
+ *  @note    
+ */
+static void sync_pwm_interrupt_callback(void *pcontent)
+{
+}
 
 /** @brief   检测到同步头信号回调
  *  @param   pcontent[in] 
@@ -53,7 +90,8 @@ static void sync_1ms_callback(void *pcontent)
  */
 CONFIG_RESULT_T sync_head_ctrl_init(void)
 {
-	systick_1ms_func_reg(sync_1ms_callback);
+	pwm_interrupt_cb_reg(sync_pwm_interrupt_callback);
+	systick_1ms_cb_reg(sync_1ms_callback);
 	
 	return RESULT_SUCCESS;
 }

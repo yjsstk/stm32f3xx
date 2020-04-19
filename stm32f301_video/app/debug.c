@@ -62,11 +62,11 @@ CONFIG_RESULT_T debug_init(void)
 	
 	if(HAL_UART_DeInit(&UartHandle) != HAL_OK)
 	{
-		return RESULT_INIT_ERR;
+		return RESULT_ERROR;
 	}  
 	if(HAL_UART_Init(&UartHandle) != HAL_OK)
 	{
-		return RESULT_INIT_ERR;
+		return RESULT_ERROR;
 	}
 	
 	debug_uart_gpio_init();

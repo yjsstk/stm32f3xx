@@ -452,6 +452,16 @@
               <FileType>1</FileType>
               <FilePath>..\st_lib\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_rcc.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f3xx_hal_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\st_lib\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f3xx_hal_tim_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\st_lib\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_tim_ex.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -506,6 +516,11 @@
               <FileName>systick.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\app\systick.c</FilePath>
+            </File>
+            <File>
+              <FileName>pwm_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\pwm_ctrl.c</FilePath>
             </File>
           </Files>
         </Group>

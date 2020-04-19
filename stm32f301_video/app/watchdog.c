@@ -50,7 +50,7 @@ CONFIG_RESULT_T watchdog_init(void)
 	
 	if(HAL_IWDG_Init(&IwdgHandle) != HAL_OK)
 	{
-		return RESULT_INIT_ERR;
+		return RESULT_ERROR;
 	}
   
 	return RESULT_SUCCESS;

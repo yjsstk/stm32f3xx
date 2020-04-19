@@ -83,7 +83,7 @@ CONFIG_RESULT_T pin25_ctrl_init(void)
 	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
 	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 	
-	systick_1ms_func_reg(pin25_1ms_callback);
+	systick_1ms_cb_reg(pin25_1ms_callback);
 	
 	return RESULT_SUCCESS;
 }

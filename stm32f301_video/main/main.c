@@ -22,6 +22,7 @@
 #include "pin12_ctrl.h"
 #include "pin25_ctrl.h"
 #include "pin24_ctrl.h"
+#include "pwm_ctrl.h"
 
 int main(void)
 {
@@ -41,6 +42,7 @@ int main(void)
 	pin24_ctrl_init();
 	rssi_signal_ctrl_init();
 	sync_head_ctrl_init();
+	pwm_ctrl_init();
 	
 	#if (CONFIG_WATCHDOG_EN == 1)
 	watchdog_init();

@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include "systick.h"
 
-static pfunc_1ms_cb_t systick_cb_list[SYSTICK_MAX_FUNC_REG]={0};
+static psystick_1ms_cb_t systick_cb_list[SYSTICK_MAX_FUNC_REG]={0};
 
 /** @brief   SYSTICK中断调用函数
  *  @param   无
@@ -37,7 +37,7 @@ inline void systick_interrupt_callback(void)
  *  @param   func[in] 回调函数
  *  @return  返回值 @see CONFIG_RESULT_T
  */
-CONFIG_RESULT_T systick_1ms_func_reg(pfunc_1ms_cb_t func)
+CONFIG_RESULT_T systick_1ms_cb_reg(psystick_1ms_cb_t func)
 {
 	for (uint8_t i=0; i<SYSTICK_MAX_FUNC_REG; i++)
 	{
@@ -47,7 +47,7 @@ CONFIG_RESULT_T systick_1ms_func_reg(pfunc_1ms_cb_t func)
 			return RESULT_SUCCESS;
 		}
 	}
-	DEBUG_INFO("systick_1ms_func_reg err");
+	DEBUG_INFO("systick_1ms_cb_reg err");
 	return RESULT_ARRAY_FULL;
 }
 

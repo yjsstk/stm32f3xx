@@ -12,7 +12,19 @@
 
 #include "config.h"
 
-#define  SYNC_KEEP_OUTPUT_MS    (5 * 1000)
+// 当两个RSSI都低于1.0V时,PIN18,PIN19保持同步信号输出时间
+#define  SYNC_KEEP_OUTPUT_MS             (5 * 1000)      
+
+#define  SYNC_ROW_CYCLE_NS                 64000    // ns，行同步信号周期
+#define  SYNC_ROW_PULSE_NS                 4700     // ns，行同步信号脉冲
+
+// PAL制视频每场共有312.5个行同步脉冲。在处理时分奇偶场处理，奇场312， 偶场313
+#define	 SYNC_PAL_FIELD_ROW                312
+#define  SYNC_PAL_SLOT_PULSE               5        // 开槽脉冲个数
+
+// NTSC制视频每场共有262.5个行同步脉冲。在处理时分奇偶场处理，奇场262， 偶场263
+#define	 SYNC_NTSC_FIELD_ROW               262
+#define  SYNC_NTSC_SLOT_PULSE              6        // 开槽脉冲个数
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 

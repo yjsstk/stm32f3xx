@@ -12,7 +12,7 @@
 #include "config.h"
 
 #define ADC_CHANNEL_NUMB     1
-#define ADC_DMA_BUFF_LEN     5
+#define ADC_DMA_BUFF_LEN     6
 
 
 /** @brief   该模块的应用初始化函数 

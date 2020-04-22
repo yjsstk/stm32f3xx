@@ -6,13 +6,31 @@
  *  @date     2020/04/19
  */
 
+#include "config.h"
+#if (CONFIG_DEBUG_EN == 1)
+#define DEBUG_INFO_EN       1
+#define DEBUG_MODULE_NAME   "ADC"
+#endif
+#include "debug.h"
+
 #include "adc_rssi.h"
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_adc.h"
+#include "stm32f3xx_hal_gpio.h"
+#include <string.h>
 
 static ADC_HandleTypeDef  AdcHandle;
 
 static uint16_t adc_dma_buff[ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN];
+
+/** @brief   DMA回调，函数名固定不可更改
+ *  @param   hadc[in] 
+ *  @return  无
+ *  @note    
+ */
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
+{
+}
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 
@@ -21,6 +39,17 @@ static uint16_t adc_dma_buff[ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN];
  */
 CONFIG_RESULT_T adc_init(void)
 {
+	GPIO_InitTypeDef  GPIO_InitStruct;
+	
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	GPIO_InitStruct.Pin   = GPIO_PIN_0 | GPIO_PIN_1;
+	GPIO_InitStruct.Mode  = GPIO_MODE_ANALOG;
+	GPIO_InitStruct.Pull  = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct); 
+	
+	
+	
 	/* ### - 1 - Initialize ADC peripheral #################################### */
 	AdcHandle.Instance = ADC1;
 	if (HAL_ADC_DeInit(&AdcHandle) != HAL_OK)
@@ -70,7 +99,7 @@ CONFIG_RESULT_T adc_init(void)
 	/* ### - 4 - Start conversion in DMA mode ################################# */
 	if (HAL_ADC_Start_DMA(&AdcHandle,
 						(uint32_t *)adc_dma_buff,
-						0
+						ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN
 					   ) != HAL_OK)
 	{
 		return RESULT_ERROR;

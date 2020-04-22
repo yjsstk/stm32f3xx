@@ -523,6 +523,11 @@
               <FilePath>..\app\pin27_ctrl.c</FilePath>
             </File>
             <File>
+              <FileName>pin22_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\app\pin22_ctrl.c</FilePath>
+            </File>
+            <File>
               <FileName>systick.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\app\systick.c</FilePath>

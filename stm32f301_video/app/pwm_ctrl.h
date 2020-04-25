@@ -18,6 +18,12 @@ typedef void (*ppwm_interrupt_cb_t)(void *pcontent);
  */
 extern CONFIG_RESULT_T pwm_interrupt_cb_reg(ppwm_interrupt_cb_t func);
 
+/** @brief   PWM中断处理
+ *  @param   无
+ *  @return  无
+ */
+extern inline void pwm_interrupt_handler(void);
+
 /** @brief   PIN18,PIN19停止PWM输出
  *  @param   无
  *  @return  无

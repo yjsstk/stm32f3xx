@@ -12,8 +12,20 @@
 #if (CONFIG_DEBUG_EN == 1)
 
 #include "stm32f3xx_hal.h"
-#include "stm32f3xx_hal_uart.h"
+#include "stm32f3xx_hal_usart.h"
 
+static UART_HandleTypeDef UartHandle;
+
+/** @brief   发送数据
+ *  @param   
+ *  @return  
+ */
+int fputc(int ch, FILE *f)
+{
+	UartHandle.Instance->TDR = ch;
+    while (__HAL_UART_GET_FLAG(&UartHandle, UART_FLAG_TXE) == RESET); 
+	return ch;
+}
 
 /** @brief   串口所对应使用的GPIO口初始化配置
  *  @param   无 
@@ -26,9 +38,6 @@ static void debug_uart_gpio_init(void)
 	/*##-1- Enable peripherals and GPIO Clocks #################################*/
 	/* Enable GPIO TX/RX clock */
 	__HAL_RCC_GPIOB_CLK_ENABLE();
-
-	/* Enable USARTx clock */
-	__HAL_RCC_USART1_CLK_ENABLE();
   
 	/*##-2- Configure peripheral GPIO ##########################################*/  
 	/* UART TX GPIO pin configuration  */
@@ -48,9 +57,12 @@ static void debug_uart_gpio_init(void)
  */
 CONFIG_RESULT_T debug_init(void)
 {
-	UART_HandleTypeDef UartHandle;
+	debug_uart_gpio_init();
+	
+	__HAL_RCC_USART1_CLK_ENABLE();
 	
 	UartHandle.Instance          = USART1;
+
 	UartHandle.Init.BaudRate     = 115200;
 	UartHandle.Init.WordLength   = UART_WORDLENGTH_8B;
 	UartHandle.Init.StopBits     = UART_STOPBITS_1;
@@ -58,18 +70,16 @@ CONFIG_RESULT_T debug_init(void)
 	UartHandle.Init.HwFlowCtl    = UART_HWCONTROL_NONE;
 	UartHandle.Init.Mode         = UART_MODE_TX;
 	UartHandle.Init.OverSampling = UART_OVERSAMPLING_16;
-	UartHandle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;\
-	
+	UartHandle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+
 	if(HAL_UART_DeInit(&UartHandle) != HAL_OK)
 	{
-		return RESULT_ERROR;
 	}  
 	if(HAL_UART_Init(&UartHandle) != HAL_OK)
 	{
-		return RESULT_ERROR;
 	}
 	
-	debug_uart_gpio_init();
+	__HAL_UART_ENABLE(&UartHandle);
 	
 	return RESULT_SUCCESS;
 }

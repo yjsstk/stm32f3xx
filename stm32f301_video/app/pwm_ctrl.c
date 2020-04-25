@@ -6,6 +6,12 @@
  *  @date     2020/04/19
  *  @note     PIN18,PIN19,PIN21的输出波形用PWM控制输出
  */
+#include "config.h"
+#if (CONFIG_DEBUG_EN == 1)
+#define DEBUG_INFO_EN       1
+#define DEBUG_MODULE_NAME   "PWM"
+#endif
+#include "debug.h"
 
 #include "pwm_ctrl.h"
 #include "stm32f3xx_hal.h"
@@ -31,6 +37,34 @@ CONFIG_RESULT_T pwm_interrupt_cb_reg(ppwm_interrupt_cb_t func)
 		return RESULT_SUCCESS;
 	}
 	return RESULT_ERROR;
+}
+
+/** @brief   PWM中断处理
+ *  @param   无
+ *  @return  无
+ */ 
+inline void pwm_interrupt_handler(void)
+{
+	if (__HAL_TIM_GET_IT_SOURCE(&TimHandle, TIM_IT_CC1) == SET)
+	{
+		__HAL_TIM_CLEAR_IT(&TimHandle, TIM_IT_CC1);
+		if (pwm_interrupt_cb != NULL)
+		{
+			pwm_interrupt_cb(NULL);
+		}
+	}
+	if (__HAL_TIM_GET_IT_SOURCE(&TimHandle, TIM_IT_CC2) == SET)
+	{
+		__HAL_TIM_CLEAR_IT(&TimHandle, TIM_IT_CC2);
+	}
+	if (__HAL_TIM_GET_IT_SOURCE(&TimHandle, TIM_IT_CC3) == SET)
+	{
+		__HAL_TIM_CLEAR_IT(&TimHandle, TIM_IT_CC3);
+	}
+	if (__HAL_TIM_GET_IT_SOURCE(&TimHandle, TIM_IT_CC4) == SET)
+	{
+		__HAL_TIM_CLEAR_IT(&TimHandle, TIM_IT_CC4);
+	}
 }
 
 /** @brief   PIN18,PIN19停止PWM输出
@@ -63,6 +97,34 @@ void pwm_pin21_start(uint32_t cycle_ns, uint32_t pulse_ns)
 
 }
 
+/** @brief   GIPO初始化
+ *  @param   无 
+ *  @return  无 
+ */
+void pwm_gpio_init(void)
+{
+  GPIO_InitTypeDef   GPIO_InitStruct;
+
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /* Common configuration for all channels */
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
+  GPIO_InitStruct.Pin = GPIO_PIN_11;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
+
 /** @brief   该模块的应用初始化函数 
  *  @param   无 
  *  @return  返回值 @see CONFIG_RESULT_T
@@ -70,10 +132,17 @@ void pwm_pin21_start(uint32_t cycle_ns, uint32_t pulse_ns)
  */
 CONFIG_RESULT_T pwm_ctrl_init(void)
 {
+	pwm_gpio_init();
+	
+	HAL_NVIC_SetPriority(TIM1_CC_IRQn, 2, 0U);
+	HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
+	
+	__HAL_RCC_TIM1_CLK_ENABLE();
+	
 	TimHandle.Instance = TIM1;
 
 	TimHandle.Init.Prescaler         = 1000;
-	TimHandle.Init.Period            = 1000;
+	TimHandle.Init.Period            = 71;
 	TimHandle.Init.ClockDivision     = 0;
 	TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
 	TimHandle.Init.RepetitionCounter = 0;
@@ -84,61 +153,39 @@ CONFIG_RESULT_T pwm_ctrl_init(void)
 		return RESULT_ERROR;
 	}
 	
+	__HAL_TIM_ENABLE_IT(&TimHandle, TIM1_CC_IRQn);
+	
 	TIM_OC_InitTypeDef sConfig;
 	
 	sConfig.OCMode       = TIM_OCMODE_PWM1;
 	sConfig.OCPolarity   = TIM_OCPOLARITY_HIGH;
-	sConfig.OCFastMode   = TIM_OCFAST_DISABLE;
-	sConfig.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+	sConfig.OCFastMode   = TIM_OCFAST_ENABLE;
+	sConfig.OCNPolarity  = TIM_OCNPOLARITY_LOW;
 	sConfig.OCNIdleState = TIM_OCNIDLESTATE_RESET;
 
 	sConfig.OCIdleState  = TIM_OCIDLESTATE_RESET;
 
-	sConfig.Pulse = 100;
+	sConfig.Pulse = 500;
 	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_1) != HAL_OK)
 	{
 		return RESULT_ERROR;
 	}
 
 	/* Set the pulse value for channel 2 */
-	sConfig.Pulse = 100;
+	sConfig.Pulse = 500;
 	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_2) != HAL_OK)
 	{
 		return RESULT_ERROR;
 	}
-
-	/* Set the pulse value for channel 3 */
-	sConfig.Pulse = 100;
-	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_3) != HAL_OK)
-	{
-		return RESULT_ERROR;
-	}
-
-	/* Set the pulse value for channel 4 */
-	sConfig.Pulse = 100;
-	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_4) != HAL_OK)
-	{
-		return RESULT_ERROR;
-	}
-
+	
 	/*##-3- Start PWM signals generation #######################################*/
 	/* Start channel 1 */
-	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_1) != HAL_OK)
+	if (HAL_TIM_PWM_Start_IT(&TimHandle, TIM_CHANNEL_1) != HAL_OK)
 	{
 		return RESULT_ERROR;
 	}
 	/* Start channel 2 */
-	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_2) != HAL_OK)
-	{
-		return RESULT_ERROR;
-	}
-	/* Start channel 3 */
-	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_3) != HAL_OK)
-	{
-		return RESULT_ERROR;
-	}
-	/* Start channel 4 */
-	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_4) != HAL_OK)
+	if (HAL_TIM_PWM_Start_IT(&TimHandle, TIM_CHANNEL_2) != HAL_OK)
 	{
 		return RESULT_ERROR;
 	}

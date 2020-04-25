@@ -21,4 +21,7 @@
 *.ini
 *.org
 *.scvd
+*.iex
 
+
+stm32f301_video/project/JLinkLog.txt

@@ -14,7 +14,7 @@
 
 
 #define CONFIG_DEBUG_EN           1          // DEBUG调试
-#define CONFIG_WATCHDOG_EN        1          // 看门狗功能
+#define CONFIG_WATCHDOG_EN        0          // 看门狗功能
  
 typedef enum
 {

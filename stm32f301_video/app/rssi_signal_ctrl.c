@@ -7,6 +7,7 @@
  *  @note     通过对两路RSSI信号的强度来选择控制视频信号的输出
  */
 
+#include "config.h"
 #if (CONFIG_DEBUG_EN == 1)
 #define DEBUG_INFO_EN       1
 #define DEBUG_MODULE_NAME   "rssi"

@@ -25,6 +25,7 @@
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_gpio.h"
 #include "systick.h"
+#include "pwm_ctrl.h"
 
 /** @addtogroup STM32F3xx_HAL_Examples
   * @{
@@ -176,6 +177,17 @@ void EXTI15_10_IRQHandler(void)
 		__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_15);
 		pin25_exti15_interrupt_handler(NULL);
 	}
+}
+
+void TIM1_CC_IRQHandler(void)
+{
+	pwm_interrupt_handler();
+	
+}
+
+void TIM1_UP_TIM16_IRQHandler(void)
+{
+	pwm_interrupt_handler();
 }
 
 /**

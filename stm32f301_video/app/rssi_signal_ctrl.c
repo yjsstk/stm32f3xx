@@ -19,8 +19,8 @@
 #include "rssi_signal_ctrl.h"
 #include "pin30_ctrl.h"
 #include "pin12_ctrl.h"
+#include "app_scheduler.h"
 
-static bool     rssi_rx_new_msg = false;         // RSSI接收到新数据
 static bool     rssi_buff_lock  = false;         // 数据接收数组锁定
 static uint8_t  rssi_lost_time  = 0;             // 因锁定接收而错过的数据次数
 static uint8_t  rssi_buff_in    = 0;             // 数据存入数组索引号
@@ -41,32 +41,6 @@ typedef struct
 
 static rssi_status_t rssi_status;
 
-/** @brief   RSSI信号检测到数据的回调函数
- *  @param   rssi_top[in] ：RSSI_TOP检测到的数据
- *  @param   rssi_bot[in] ：RSSI_BOT检测到的数据
- *  @return  无 
- */
-static void rssi_detect_callbacks(uint16_t rssi_top, uint16_t rssi_bot)
-{
-	if (rssi_buff_lock == true)
-	{
-		if (rssi_lost_time < 0xFF)
-		{
-			rssi_lost_time += 1;
-		}
-		return;
-	}
-	rssi_top_buff[rssi_buff_in] = rssi_top;
-	rssi_bot_buff[rssi_buff_in] = rssi_bot;
-	
-	rssi_buff_in = (rssi_buff_in + 1) % RSSI_BUFFER_LEN;
-	if (rssi_rx_number < RSSI_BUFFER_LEN)
-	{
-		rssi_rx_number++;
-	}
-	rssi_rx_new_msg = true;
-}
-
 /** @brief   RSSI信号平均值计算
  *  @param   无
  *  @return  无 
@@ -82,7 +56,6 @@ static void rssi_signal_avg_calc(void)
 		top_val += rssi_top_buff[i];
 		bot_val += rssi_bot_buff[i];
 	}
-	rssi_rx_new_msg = false;
 	rssi_buff_lock  = false;
 	
 	rssi_status.rssi_top_avg = top_val / number;
@@ -181,6 +154,44 @@ bool rssi_get_is_both_weak(void)
 	}
 }
 
+/** @brief   PWM事件处理
+ *  @param   parg[in] 
+ *  @param   arg_size[in]
+ *  @return  无
+ *  @note    
+ */
+static void rssi_event_handle(void *parg, uint16_t arg_size)
+{
+	rssi_signal_avg_calc();
+	rssi_video_ctrl_deal();
+}
+
+/** @brief   RSSI信号检测到数据的回调函数
+ *  @param   rssi_top[in] ：RSSI_TOP检测到的数据
+ *  @param   rssi_bot[in] ：RSSI_BOT检测到的数据
+ *  @return  无 
+ */
+static void rssi_detect_callbacks(uint16_t rssi_top, uint16_t rssi_bot)
+{
+	if (rssi_buff_lock == true)
+	{
+		if (rssi_lost_time < 0xFF)
+		{
+			rssi_lost_time += 1;
+		}
+		return;
+	}
+	rssi_top_buff[rssi_buff_in] = rssi_top;
+	rssi_bot_buff[rssi_buff_in] = rssi_bot;
+	
+	rssi_buff_in = (rssi_buff_in + 1) % RSSI_BUFFER_LEN;
+	if (rssi_rx_number < RSSI_BUFFER_LEN)
+	{
+		rssi_rx_number++;
+	}
+	app_scheduler_put(rssi_event_handle, NULL, 0);
+}
+
 /** @brief   该模块的应用初始化函数 
  *  @param   无 
  *  @return  返回值 @see CONFIG_RESULT_T
@@ -193,20 +204,4 @@ CONFIG_RESULT_T rssi_signal_ctrl_init(void)
 	
 	return RESULT_SUCCESS;
 }
-
-/** @brief   RSSI事件循环处理函数
- *  @param   无 
- *  @return  无
- *  @note    函数放在MAIN的主循环中调用
- */
-void rssi_event_loop(void)
-{
-	if (rssi_rx_new_msg == false)
-	{
-		return;
-	}
-	rssi_signal_avg_calc();
-	rssi_video_ctrl_deal();
-}
-
 

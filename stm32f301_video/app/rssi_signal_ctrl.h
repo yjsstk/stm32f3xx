@@ -30,13 +30,6 @@ extern bool rssi_get_is_both_weak(void);
  */
 extern CONFIG_RESULT_T rssi_signal_ctrl_init(void);
 
-/** @brief   RSSI事件循环处理函数
- *  @param   无 
- *  @return  无
- *  @note    函数放在MAIN的主循环中调用
- */
-extern void rssi_event_loop(void);
-
 #endif
 
 

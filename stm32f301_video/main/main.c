@@ -129,8 +129,6 @@ int main(void)
 	
 	while (1)
 	{
-		rssi_event_loop();
-		
 		app_scheduler_exe();
 		
 		#if (CONFIG_WATCHDOG_EN == 1)

@@ -21,6 +21,7 @@
 #include "pwm_ctrl.h"
 #include "pin22_ctrl.h"
 #include "rssi_signal_ctrl.h"
+#include "app_scheduler.h"
 
 static uint16_t sync_keep_output_ms;
 
@@ -58,12 +59,13 @@ static sync_ctrl_t sync_ntsc_ctrl=
 
 static sync_ctrl_t *psync_ctrl = &sync_ntsc_ctrl;
 
-/** @brief   PWM中断回调函数
- *  @param   pcontent[in] 
+/** @brief   PWM事件处理
+ *  @param   parg[in] 
+ *  @param   arg_size[in]
  *  @return  无
  *  @note    
  */
-static void sync_pwm_interrupt_callback(void *pcontent)
+static void sync_pwm_event_handle(void *parg, uint16_t arg_size)
 {
 	psync_ctrl->pulse_count++;
 	if (psync_ctrl->pulse_count == psync_ctrl->total_row_pulse - 1)
@@ -113,6 +115,16 @@ static void sync_pwm_interrupt_callback(void *pcontent)
 			}
 		}
 	}
+}
+
+/** @brief   PWM中断回调函数
+ *  @param   pcontent[in] 
+ *  @return  无
+ *  @note    
+ */
+static void sync_pwm_interrupt_callback(void *pcontent)
+{
+	app_scheduler_put(sync_pwm_event_handle, NULL, 0);
 }
 
 /** @brief   检测到同步头信号回调

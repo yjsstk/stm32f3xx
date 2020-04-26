@@ -48,6 +48,6 @@ CONFIG_RESULT_T systick_1ms_cb_reg(psystick_1ms_cb_t func)
 		}
 	}
 	DEBUG_INFO("systick_1ms_cb_reg err");
-	return RESULT_ARRAY_FULL;
+	return RESULT_FULL;
 }
 

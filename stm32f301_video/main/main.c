@@ -27,6 +27,7 @@
 #include "pin27_ctrl.h"
 #include "pin22_ctrl.h"
 #include "systick.h"
+#include "app_scheduler.h"
 
 /**
   * @brief  System Clock Configuration
@@ -76,10 +77,20 @@ void SystemClock_Config(void)
 	}
 }
 
-static uint16_t main_run_count=0;
+void scheduler_test(void *parg, uint16_t size)
+{
+	uint32_t test = *(uint32_t *)parg;
+	DEBUG_INFO("scheduler test: %d", test);
+}
+
 void systic_test(void *pcontent)
 {
-	main_run_count++;
+	static uint32_t main_run_count=0;
+	if ((main_run_count++ % 1000) == 0)
+	{
+		uint32_t test = main_run_count / 1000;
+		app_scheduler_put(scheduler_test, &test, sizeof(test));
+	}
 }
 
 int main(void)
@@ -96,6 +107,8 @@ int main(void)
 	DEBUG_INFO("***** main run *****");
 	DEBUG_INFO("project name: %s", CONFIG_PROJECT_NAME);
 	DEBUG_INFO("version: %d", CONFIG_VERSION);
+	
+	app_scheduler_init();
 	
 	pin12_ctrl_init();
 	pin30_ctrl_init();
@@ -118,15 +131,11 @@ int main(void)
 	{
 		rssi_event_loop();
 		
+		app_scheduler_exe();
+		
 		#if (CONFIG_WATCHDOG_EN == 1)
 		watchdog_feed();
 		#endif
-		
-		if (main_run_count >= 1000)
-		{
-			main_run_count = 0;
-			DEBUG_PRINTF(".");
-		}
 	}
 }
 

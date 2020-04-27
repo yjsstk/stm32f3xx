@@ -32,9 +32,6 @@ typedef struct
 	uint16_t pulse_count;      // 脉冲计数
 	uint16_t field_count;
 	uint16_t total_row_pulse;  //
-	uint16_t start_solt_one;
-	uint16_t start_solt_two;
-	uint16_t start_solt_three;
 }sync_ctrl_t;
 
 static sync_ctrl_t sync_pal_ctrl=
@@ -43,10 +40,6 @@ static sync_ctrl_t sync_pal_ctrl=
 	.slot_step        = 0,
 	.pulse_count      = 0,
 	.total_row_pulse  = SYNC_PAL_ROW_PULSE,
-	
-	.start_solt_one   = SYNC_PAL_FIELD_ROW,
-	.start_solt_two   = SYNC_PAL_FIELD_ROW,
-	.start_solt_three = SYNC_PAL_FIELD_ROW,
 };
 
 static sync_ctrl_t sync_ntsc_ctrl=
@@ -111,6 +104,7 @@ static void sync_pwm_event_handle(void *parg, uint16_t arg_size)
 			}
 			if (psync_ctrl->field_count >= last_pulse)
 			{
+				psync_ctrl->field_even = !psync_ctrl->field_even;
 				psync_ctrl->pulse_count = 0;
 			}
 		}

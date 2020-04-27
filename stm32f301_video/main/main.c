@@ -98,7 +98,7 @@ int main(void)
 	HAL_Init();
 	
 	/* Configure the system clock to 72 MHz */
-//    SystemClock_Config();
+    SystemClock_Config();
 	
 	#if (CONFIG_DEBUG_EN == 1)
 	debug_init();

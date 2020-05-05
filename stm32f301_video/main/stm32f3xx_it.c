@@ -179,15 +179,10 @@ void EXTI15_10_IRQHandler(void)
 	}
 }
 
-void TIM1_CC_IRQHandler(void)
-{
-	pwm_interrupt_handler();
-	
-}
 
 void TIM1_UP_TIM16_IRQHandler(void)
 {
-	pwm_interrupt_handler();
+	pwm_tim1_up_interrupt_handler();
 }
 
 /**

@@ -18,6 +18,8 @@
 #include "stm32f3xx_hal_gpio.h"
 #include "stm32f3xx_hal_tim.h"
 
+#define  PWM_NS_TO_72MHZ_CNT(ns)   ((ns) * 72 / 1000)
+
 static ppwm_interrupt_cb_t pwm_interrupt_cb = NULL;
 static TIM_HandleTypeDef   TimHandle;
 static uint32_t pwm_cycle_ns       = 64000;
@@ -62,28 +64,27 @@ inline void pwm_tim1_up_interrupt_handler(void)
  */
 void pwm_pin18_pin19_stop(void)
 {
-
+	TimHandle.Instance->CCR1 = 0;
+	TimHandle.Instance->CCR2 = 0;
 }
 
 /** @brief   PIN18,PIN19开始PWM输出
  *  @param   cycle_ns[in] ：PWM周期
  *  @param   pin18_pulse_ns[in] ：高电平时间
  *  @param   pin19_pulse_ns[in] ：高电平时间
+ *  @param   pin21_pulse_ns[in] ：低电平时间
  *  @return  无
  */
-void pwm_pin18_pin19_start(uint32_t cycle_ns, uint32_t pin18_pulse_ns, uint32_t pin19_pulse_ns)
+void pwm_set_output(
+	uint32_t cycle_ns, 
+	uint32_t pin18_pulse_ns, 
+	uint32_t pin19_pulse_ns, 
+	uint32_t pin21_pulse_ns)
 {
-
-}
-
-/** @brief   PIN21开始PWM输出
- *  @param   cycle_ns[in] ：PWM周期
- *  @param   pulse_ns[in] ：低电平时间
- *  @return  无
- */
-void pwm_pin21_start(uint32_t cycle_ns, uint32_t pulse_ns)
-{
-
+	TimHandle.Instance->ARR  = PWM_NS_TO_72MHZ_CNT(cycle_ns) - 1;
+	TimHandle.Instance->CCR1 = PWM_NS_TO_72MHZ_CNT(pin18_pulse_ns);
+	TimHandle.Instance->CCR2 = PWM_NS_TO_72MHZ_CNT(pin19_pulse_ns);
+	TimHandle.Instance->CCR4 = PWM_NS_TO_72MHZ_CNT(pin21_pulse_ns);
 }
 
 /** @brief   GIPO初始化
@@ -110,7 +111,7 @@ void pwm_gpio_init(void)
 	GPIO_InitStruct.Pin = GPIO_PIN_9;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	GPIO_InitStruct.Alternate = GPIO_AF6_TIM1;
+	GPIO_InitStruct.Alternate = GPIO_AF11_TIM1;
 	GPIO_InitStruct.Pin = GPIO_PIN_11;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
@@ -131,8 +132,8 @@ CONFIG_RESULT_T pwm_ctrl_init(void)
 	
 	TimHandle.Instance = TIM1;
 
-	TimHandle.Init.Prescaler         = 1000-1;
-	TimHandle.Init.Period            = 71;
+	TimHandle.Init.Period            = PWM_NS_TO_72MHZ_CNT(pwm_cycle_ns) - 1;
+	TimHandle.Init.Prescaler         = 0;
 	TimHandle.Init.ClockDivision     = 0;
 	TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
 	TimHandle.Init.RepetitionCounter = 0;
@@ -176,15 +177,22 @@ CONFIG_RESULT_T pwm_ctrl_init(void)
 	sConfig.OCIdleState  = TIM_OCIDLESTATE_RESET;
 
 	/* Set the pulse value for channel 1 */
-	sConfig.Pulse = 50;
+	sConfig.Pulse = 0;
 	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_1) != HAL_OK)
 	{
 		return RESULT_ERROR;
 	}
 
 	/* Set the pulse value for channel 2 */
-	sConfig.Pulse = 50;
+	sConfig.Pulse = 0;
 	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_2) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
+	
+	sConfig.OCMode = TIM_OCMODE_PWM2;
+	sConfig.Pulse  = PWM_NS_TO_72MHZ_CNT(pwm_pin21_pulse_ns);
+	if (HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_4) != HAL_OK)
 	{
 		return RESULT_ERROR;
 	}
@@ -195,11 +203,18 @@ CONFIG_RESULT_T pwm_ctrl_init(void)
 	{
 		return RESULT_ERROR;
 	}
-	if (HAL_TIMEx_PWMN_Start(&TimHandle, TIM_CHANNEL_1)!= HAL_OK)
+//	if (HAL_TIMEx_PWMN_Start(&TimHandle, TIM_CHANNEL_1)!= HAL_OK)
+//	{
+//		return RESULT_ERROR;
+//	}
+	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_2) != HAL_OK)
 	{
 		return RESULT_ERROR;
 	}
-
+	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_4) != HAL_OK)
+	{
+		return RESULT_ERROR;
+	}
 
 	return RESULT_SUCCESS;
 }

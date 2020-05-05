@@ -34,16 +34,14 @@ extern void pwm_pin18_pin19_stop(void);
  *  @param   cycle_ns[in] ：PWM周期
  *  @param   pin18_pulse_ns[in] ：高电平时间
  *  @param   pin19_pulse_ns[in] ：高电平时间
+ *  @param   pin21_pulse_ns[in] ：低电平时间
  *  @return  无
  */
-extern void pwm_pin18_pin19_start(uint32_t cycle_ns, uint32_t pin18_pulse_ns, uint32_t pin19_pulse_ns);
-
-/** @brief   PIN21开始PWM输出
- *  @param   cycle_ns[in] ：PWM周期
- *  @param   pulse_ns[in] ：低电平时间
- *  @return  无
- */
-extern void pwm_pin21_start(uint32_t cycle_ns, uint32_t pulse_ns);
+extern void pwm_set_output(
+	uint32_t cycle_ns, 
+	uint32_t pin18_pulse_ns, 
+	uint32_t pin19_pulse_ns, 
+	uint32_t pin21_pulse_ns);
 	
 /** @brief   该模块的应用初始化函数 
  *  @param   无 

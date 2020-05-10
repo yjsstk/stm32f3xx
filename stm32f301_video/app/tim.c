@@ -72,7 +72,7 @@ void MX_TIM2_Init(void)
 void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 {
 
-  //GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(tim_baseHandle->Instance==TIM2)
   {
   /* USER CODE BEGIN TIM2_MspInit 0 */
@@ -83,8 +83,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
   
     __HAL_RCC_GPIOA_CLK_ENABLE();
 		
-		/* 自动生成代码会默认连接到GPIO，先手动屏蔽 */
-#if 0
+
     /**TIM2 GPIO Configuration    
     PA3     ------> TIM2_CH4 
     */
@@ -94,7 +93,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-#endif
+
 
     /* TIM2 interrupt Init */
     HAL_NVIC_SetPriority(TIM2_IRQn, 1, 0);
@@ -116,13 +115,11 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
     /* Peripheral clock disable */
     __HAL_RCC_TIM2_CLK_DISABLE();
   
-		/* 自动生成代码会默认连接到GPIO，先手动屏蔽 */
-#if 0
     /**TIM2 GPIO Configuration    
     PA3     ------> TIM2_CH4 
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_3);
-#endif
+
 
     /* TIM2 interrupt Deinit */
     HAL_NVIC_DisableIRQ(TIM2_IRQn);

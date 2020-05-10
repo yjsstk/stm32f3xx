@@ -56,8 +56,16 @@ void HAL_COMP_MspInit(COMP_HandleTypeDef* compHandle)
   
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**COMP2 GPIO Configuration    
+    PA2     ------> COMP2_OUT
     PA7     ------> COMP2_INP 
     */
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF8_GPCOMP2;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
     GPIO_InitStruct.Pin = GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -79,9 +87,10 @@ void HAL_COMP_MspDeInit(COMP_HandleTypeDef* compHandle)
   /* USER CODE END COMP2_MspDeInit 0 */
   
     /**COMP2 GPIO Configuration    
+    PA2     ------> COMP2_OUT
     PA7     ------> COMP2_INP 
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_7);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_7);
 
   /* USER CODE BEGIN COMP2_MspDeInit 1 */
 

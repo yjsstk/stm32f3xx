@@ -17,11 +17,37 @@
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_adc.h"
 #include "stm32f3xx_hal_gpio.h"
+#include "stm32f3xx_hal_def.h"
+#include "app_scheduler.h"
 #include <string.h>
 
 static ADC_HandleTypeDef  AdcHandle;
+static DMA_HandleTypeDef  DmaHandle;
 
 static uint16_t adc_dma_buff[ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN];
+
+/** @brief   DMA回调
+ *  @param   hadc[in] 
+ *  @return  无
+ *  @note    
+ */
+void adc_scheduler_test(void *parg, uint16_t size)
+{
+	uint8_t test = *((uint8_t *)parg);
+	DEBUG_INFO("%s", test == 1 ? "ADC_Conv" : "dma_cb");
+}
+
+/** @brief   DMA回调
+ *  @param   hadc[in] 
+ *  @return  无
+ *  @note    
+ */
+void adc_dma_cb(void)
+{
+	uint8_t test = 2;
+	app_scheduler_put(adc_scheduler_test, &test, sizeof(test));
+}
+
 
 /** @brief   DMA回调，函数名固定不可更改
  *  @param   hadc[in] 
@@ -30,6 +56,8 @@ static uint16_t adc_dma_buff[ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN];
  */
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
+	uint8_t test = 1;
+	app_scheduler_put(adc_scheduler_test, &test, sizeof(test));
 }
 
 /** @brief   该模块的应用初始化函数 
@@ -48,7 +76,7 @@ CONFIG_RESULT_T adc_init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct); 
 	
-	
+	__HAL_RCC_ADC1_CLK_ENABLE();
 	
 	/* ### - 1 - Initialize ADC peripheral #################################### */
 	AdcHandle.Instance = ADC1;
@@ -76,6 +104,27 @@ CONFIG_RESULT_T adc_init(void)
 	{
 		return RESULT_ERROR;
 	}
+	
+	__HAL_RCC_DMA1_CLK_ENABLE();
+	DmaHandle.Instance                 = DMA1_Channel2;
+	DmaHandle.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+	DmaHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
+	DmaHandle.Init.MemInc              = DMA_MINC_ENABLE;
+	DmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+	DmaHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
+	DmaHandle.Init.Mode                = DMA_CIRCULAR;
+	DmaHandle.Init.Priority            = DMA_PRIORITY_MEDIUM;
+	/* Deinitialize  & Initialize the DMA for new transfer */
+	HAL_DMA_DeInit(&DmaHandle);
+	HAL_DMA_Init(&DmaHandle);
+	
+	/* Associate the DMA handle */
+	__HAL_LINKDMA(&AdcHandle, DMA_Handle, DmaHandle);
+
+	/* NVIC configuration for DMA Input data interrupt */
+	HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 1, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);  
+	
 
 	/* ### - 2 - Start calibration ############################################ */
 	if (HAL_ADCEx_Calibration_Start(&AdcHandle, ADC_SINGLE_ENDED) !=  HAL_OK)

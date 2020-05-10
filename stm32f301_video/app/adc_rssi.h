@@ -22,7 +22,7 @@
  */
 extern CONFIG_RESULT_T adc_init(void);
 
-
+extern void adc_dma_cb(void);
 
 #endif
 

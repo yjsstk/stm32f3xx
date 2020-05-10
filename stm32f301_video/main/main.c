@@ -28,6 +28,9 @@
 #include "pin22_ctrl.h"
 #include "systick.h"
 #include "app_scheduler.h"
+#include "comp.h"
+#include "dac.h"
+#include "tim.h"
 
 /**
   * @brief  System Clock Configuration
@@ -93,6 +96,18 @@ void systic_test(void *pcontent)
 	}
 }
 
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+
+  /* USER CODE END Error_Handler_Debug */
+}
+
 int main(void)
 {
 	HAL_Init();
@@ -120,6 +135,10 @@ int main(void)
 	sync_head_ctrl_init();
 	pwm_ctrl_init();
 	adc_init();
+    
+    MX_COMP2_Init();
+    MX_DAC_Init();
+    MX_TIM2_Init();
 	
 	#if (CONFIG_WATCHDOG_EN == 1)
 	watchdog_init();

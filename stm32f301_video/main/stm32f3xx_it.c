@@ -26,6 +26,7 @@
 #include "stm32f3xx_hal_gpio.h"
 #include "systick.h"
 #include "pwm_ctrl.h"
+#include "adc_rssi.h"
 
 /** @addtogroup STM32F3xx_HAL_Examples
   * @{
@@ -183,6 +184,11 @@ void EXTI15_10_IRQHandler(void)
 void TIM1_UP_TIM16_IRQHandler(void)
 {
 	pwm_tim1_up_interrupt_handler();
+}
+
+void DMA1_Channel2_IRQHandler(void)
+{
+	adc_dma_cb();
 }
 
 /**

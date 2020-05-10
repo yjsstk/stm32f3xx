@@ -33,7 +33,7 @@ void MX_COMP2_Init(void)
   hcomp2.Instance = COMP2;
   hcomp2.Init.InvertingInput = COMP_INVERTINGINPUT_DAC1_CH1;
   hcomp2.Init.NonInvertingInput = COMP_NONINVERTINGINPUT_IO1;
-  hcomp2.Init.Output = COMP_OUTPUT_TIM2IC4;
+  hcomp2.Init.Output = COMP_OUTPUT_NONE;
   hcomp2.Init.OutputPol = COMP_OUTPUTPOL_NONINVERTED;
   hcomp2.Init.BlankingSrce = COMP_BLANKINGSRCE_NONE;
   hcomp2.Init.TriggerMode = COMP_TRIGGERMODE_NONE;
@@ -41,6 +41,7 @@ void MX_COMP2_Init(void)
   {
     Error_Handler();
   }
+  HAL_COMP_Start(&hcomp2);
 
 }
 
@@ -57,6 +58,7 @@ void HAL_COMP_MspInit(COMP_HandleTypeDef* compHandle)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**COMP2 GPIO Configuration    
     PA2     ------> COMP2_OUT
+    PA4     ------> COMP2_INM
     PA7     ------> COMP2_INP 
     */
     GPIO_InitStruct.Pin = GPIO_PIN_2;
@@ -66,13 +68,13 @@ void HAL_COMP_MspInit(COMP_HandleTypeDef* compHandle)
     GPIO_InitStruct.Alternate = GPIO_AF8_GPCOMP2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_7;
+    GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN COMP2_MspInit 1 */
-
+   
   /* USER CODE END COMP2_MspInit 1 */
   }
 }
@@ -88,9 +90,10 @@ void HAL_COMP_MspDeInit(COMP_HandleTypeDef* compHandle)
   
     /**COMP2 GPIO Configuration    
     PA2     ------> COMP2_OUT
+    PA4     ------> COMP2_INM
     PA7     ------> COMP2_INP 
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_7);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_4|GPIO_PIN_7);
 
   /* USER CODE BEGIN COMP2_MspDeInit 1 */
 

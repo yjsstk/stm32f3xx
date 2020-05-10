@@ -27,6 +27,7 @@
 #include "systick.h"
 #include "pwm_ctrl.h"
 #include "adc_rssi.h"
+#include "tim.h"
 
 /** @addtogroup STM32F3xx_HAL_Examples
   * @{
@@ -189,6 +190,27 @@ void TIM1_UP_TIM16_IRQHandler(void)
 void DMA1_Channel2_IRQHandler(void)
 {
 	adc_dma_cb();
+}
+
+/******************************************************************************/
+/* STM32F3xx Peripheral Interrupt Handlers                                    */
+/* Add here the Interrupt Handlers for the used peripherals.                  */
+/* For the available peripheral interrupt handler names,                      */
+/* please refer to the startup file (startup_stm32f3xx.s).                    */
+/******************************************************************************/
+
+/**
+  * @brief This function handles TIM2 global interrupt.
+  */
+void TIM2_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM2_IRQn 0 */
+
+  /* USER CODE END TIM2_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim2);
+  /* USER CODE BEGIN TIM2_IRQn 1 */
+
+  /* USER CODE END TIM2_IRQn 1 */
 }
 
 /**

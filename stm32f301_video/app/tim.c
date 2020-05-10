@@ -36,8 +36,8 @@ void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 2500;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
+  htim2.Init.Period = 1000000-1;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
@@ -58,14 +58,18 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter = 8;
+  sConfigIC.ICFilter = 0;//3
   if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
   }
+  
+  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_4);
+  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4);
+  HAL_TIM_Base_Start_IT(&htim2);
 
 }
 
@@ -90,7 +94,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     GPIO_InitStruct.Pin = GPIO_PIN_3;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -130,25 +134,33 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 } 
 
 /* USER CODE BEGIN 1 */
-
-/* 手动实现输入捕获中断代码 */
+uint32_t g_cap_value[100] = {0};
+static uint16_t m_cap_index = 0;
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-		uint32_t ic_val = 0;
+		//uint32_t ic_val = 0;
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
 		{
 			//读取捕获数值
-			ic_val = htim->Instance->CCR4;
+			//ic_val = htim->Instance->CCR4;
+            m_cap_index ++;
+            if (m_cap_index >= 100)
+            {
+                m_cap_index = 0;
+            }
+            g_cap_value[m_cap_index] = htim->Instance->CCR4;
+            
 			
-			//重置计时器
-			htim->Instance->CNT = 0;
+
+			//htim->Instance->CNT = 0;
 		}
 }
 
-/* 手动实现计时器超时更新中断代码 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-
+    static uint8_t tick = 0;
+    
+   // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, tick++ & 1);
 }
 
 /* USER CODE END 1 */

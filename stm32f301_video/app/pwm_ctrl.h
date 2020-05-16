@@ -9,6 +9,7 @@
 
 #include "config.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef void (*ppwm_interrupt_cb_t)(void *pcontent);
 
@@ -43,6 +44,12 @@ extern void pwm_set_output(
 	uint32_t pin19_pulse_ns, 
 	uint32_t pin21_pulse_ns);
 	
+/** @brief   设置ARR自动重装的状态
+ *  @param   status[in] 启用或禁用自动重装功能
+ *  @return  无
+ */
+void pwm_set_auto_reload_preload(bool status);
+
 /** @brief   该模块的应用初始化函数 
  *  @param   无 
  *  @return  返回值 @see CONFIG_RESULT_T

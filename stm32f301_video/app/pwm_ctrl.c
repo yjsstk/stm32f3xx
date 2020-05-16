@@ -81,10 +81,29 @@ void pwm_set_output(
 	uint32_t pin19_pulse_ns, 
 	uint32_t pin21_pulse_ns)
 {
-	TimHandle.Instance->ARR  = PWM_NS_TO_72MHZ_CNT(cycle_ns) - 1;
+	__HAL_TIM_SET_AUTORELOAD(&TimHandle, PWM_NS_TO_72MHZ_CNT(cycle_ns) - 1);
+//	TimHandle.Instance->ARR  = PWM_NS_TO_72MHZ_CNT(cycle_ns) - 1;
 	TimHandle.Instance->CCR1 = PWM_NS_TO_72MHZ_CNT(pin18_pulse_ns);
 	TimHandle.Instance->CCR2 = PWM_NS_TO_72MHZ_CNT(pin19_pulse_ns);
 	TimHandle.Instance->CCR4 = PWM_NS_TO_72MHZ_CNT(pin21_pulse_ns);
+}
+
+/** @brief   设置ARR自动重装的状态
+ *  @param   status[in] 启用或禁用自动重装功能
+ *  @return  无
+ */
+void pwm_set_auto_reload_preload(bool status)
+{
+	if (status == true)
+	{
+		TimHandle.Instance->CR1   |= 0x0080;
+//		TimHandle.Instance->CCMR1 |= TIM_CCMR1_OC1PE;
+	}
+	else
+	{
+		TimHandle.Instance->CR1   &= ~(0x0080);
+//		TimHandle.Instance->CCMR1 &= ~TIM_CCMR1_OC1PE;
+	}
 }
 
 /** @brief   GIPO初始化

@@ -19,17 +19,27 @@
 
 #define  SYNC_ROW_CYCLE_NS                 64000    // ns，行同步信号周期
 #define  SYNC_ROW_PULSE_NS                 4700     // ns，行同步信号脉冲
-#define  SYNC_SLOT_PULSE                   5        // 开槽脉冲个数
+#define  SYNC_SLOT_PULSE                   6        // 开槽脉冲个数
 
 // PAL制视频每场共有312.5个行同步脉冲。在处理时分奇偶场处理，奇场312， 偶场313
-#define	 SYNC_PAL_FIELD_ROW                312
-#define	 SYNC_PAL_ROW_PULSE                288
-#define	 SYNC_PAL_FIELD_PULSE              24
+#define	 SYNC_PAL_ROW_PULSE                312
 
 // NTSC制视频每场共有262.5个行同步脉冲。在处理时分奇偶场处理，奇场262， 偶场263
-#define	 SYNC_NTSC_FIELD_ROW               262
-#define	 SYNC_NTSC_ROW_PULSE               240
-#define	 SYNC_NTSC_FIELD_PULSE             22
+#define	 SYNC_NTSC_ROW_PULSE               262
+
+typedef enum
+{
+	SYNC_VIDEO_UNKNOWN,
+	SYNC_VIDEO_PAL,
+	SYNC_VIDEO_NTSC,
+}sync_video_type_t;
+
+typedef enum
+{
+	SYNC_FIELD_UNKNOWN,
+	SYNC_FIELD_ODD,        // 奇场
+	SYNC_FIELD_EVEN,       // 偶场
+}sync_field_type_t;
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 

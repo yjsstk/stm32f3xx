@@ -23,42 +23,27 @@
 #include "rssi_signal_ctrl.h"
 #include "app_scheduler.h"
 
-static uint16_t sync_keep_output_ms;
-
 typedef struct
 {
-	bool     pin18_19_stop;
-	bool     field_even;       // 偶数场标志
-	uint8_t  slot_step;
+	bool     stop_output;
 	uint16_t pulse_count;      // 脉冲计数
-	uint16_t field_count;
-	uint16_t total_row_pulse;  //
-	uint16_t total_field_pulse;  //
+	uint16_t field_count;      // 
+	uint16_t max_pulse;        //
+	uint16_t keep_output_ms;
+	sync_field_type_t field_type;
+	sync_video_type_t video_type;
 }sync_ctrl_t;
 
 static sync_ctrl_t sync_pal_ctrl=
 {
-	.pin18_19_stop    = false,
-	.field_even       = false,
-	.slot_step        = 0,
-	.pulse_count      = 0,
-	.field_count      = 0,
-	.total_row_pulse  = SYNC_PAL_ROW_PULSE,
-	.total_field_pulse= SYNC_PAL_FIELD_PULSE,
+	.stop_output  = false,
+	.pulse_count  = 0,
+	.field_count  = 0,
+	.max_pulse    = SYNC_PAL_ROW_PULSE,
+	.field_type   = SYNC_FIELD_ODD,
+	.video_type   = SYNC_VIDEO_PAL,
 };
-
-static sync_ctrl_t sync_ntsc_ctrl=
-{
-	.pin18_19_stop    = false,
-	.field_even       = false,
-	.slot_step        = 0,
-	.pulse_count      = 0,
-	.field_count      = 0,
-	.total_row_pulse  = SYNC_NTSC_ROW_PULSE,
-	.total_field_pulse= SYNC_NTSC_FIELD_PULSE,
-};
-
-static sync_ctrl_t *psync_ctrl = &sync_ntsc_ctrl;
+static sync_ctrl_t *psync_ctrl = &sync_pal_ctrl;
 
 /** @brief   PWM事件处理
  *  @param   parg[in] 
@@ -68,10 +53,11 @@ static sync_ctrl_t *psync_ctrl = &sync_ntsc_ctrl;
  */
 static void sync_pwm_event_handle(void *parg, uint16_t arg_size)
 {
+	#define FIELD_PULSE_NUMBER   (SYNC_SLOT_PULSE * 3 / 2) 
 	psync_ctrl->pulse_count++;
-	if (psync_ctrl->pulse_count == psync_ctrl->total_row_pulse)
+	if (psync_ctrl->pulse_count == psync_ctrl->max_pulse - FIELD_PULSE_NUMBER)
 	{
-		if (psync_ctrl->pin18_19_stop == false)
+		if (psync_ctrl->stop_output == false)
 		{
 			pwm_set_output(SYNC_ROW_CYCLE_NS / 2, SYNC_ROW_PULSE_NS / 2, SYNC_PIN19_PULSE_NS, SYNC_ROW_PULSE_NS / 2);
 		}
@@ -80,17 +66,16 @@ static void sync_pwm_event_handle(void *parg, uint16_t arg_size)
 			pwm_set_output(SYNC_ROW_CYCLE_NS / 2, 0, 0, SYNC_ROW_PULSE_NS / 2);
 		}
 		psync_ctrl->field_count = 0;
-		psync_ctrl->slot_step   = 0;
 	}
-	else if (psync_ctrl->pulse_count > psync_ctrl->total_row_pulse)
+	else if (psync_ctrl->pulse_count > psync_ctrl->max_pulse - FIELD_PULSE_NUMBER)
 	{
 		psync_ctrl->field_count++;
-		if (psync_ctrl->field_count == SYNC_SLOT_PULSE && psync_ctrl->slot_step == 0)
+		if (psync_ctrl->field_count == SYNC_SLOT_PULSE)
 		{
 			uint32_t pin18_pulse_ns = SYNC_ROW_CYCLE_NS / 2 - SYNC_ROW_PULSE_NS;
 			uint32_t pin19_pulse_ns = SYNC_ROW_CYCLE_NS / 2 - 1750;
 			
-			if (psync_ctrl->pin18_19_stop == false)
+			if (psync_ctrl->stop_output == false)
 			{
 				pwm_set_output(SYNC_ROW_CYCLE_NS / 2, pin18_pulse_ns, pin19_pulse_ns, pin18_pulse_ns);
 			}
@@ -98,12 +83,10 @@ static void sync_pwm_event_handle(void *parg, uint16_t arg_size)
 			{
 				pwm_set_output(SYNC_ROW_CYCLE_NS / 2, 0, 0, pin18_pulse_ns);
 			}
-			psync_ctrl->slot_step   = 1;
-			psync_ctrl->field_count = 0;
 		}
-		else if (psync_ctrl->field_count == SYNC_SLOT_PULSE && psync_ctrl->slot_step == 1)
+		else if (psync_ctrl->field_count == SYNC_SLOT_PULSE * 2)
 		{
-			if (psync_ctrl->pin18_19_stop == false)
+			if (psync_ctrl->stop_output == false)
 			{
 				pwm_set_output(SYNC_ROW_CYCLE_NS / 2, SYNC_ROW_PULSE_NS / 2, SYNC_PIN19_PULSE_NS, SYNC_ROW_PULSE_NS / 2);
 			}
@@ -111,33 +94,56 @@ static void sync_pwm_event_handle(void *parg, uint16_t arg_size)
 			{
 				pwm_set_output(SYNC_ROW_CYCLE_NS / 2, 0, 0, SYNC_ROW_PULSE_NS / 2);
 			}
-			psync_ctrl->slot_step   = 2;
-			psync_ctrl->field_count = 0;
 		}
-		else if (psync_ctrl->field_count == SYNC_SLOT_PULSE && psync_ctrl->slot_step == 2)
+		else if (psync_ctrl->field_type == SYNC_FIELD_EVEN)
 		{
-			if (psync_ctrl->pin18_19_stop == false)
+			if (psync_ctrl->field_count >= SYNC_SLOT_PULSE * 3 + 1)
 			{
-				pwm_set_output(SYNC_ROW_CYCLE_NS, SYNC_ROW_PULSE_NS, SYNC_PIN19_PULSE_NS, SYNC_ROW_PULSE_NS);
-			}
-			else
-			{
-				pwm_set_output(SYNC_ROW_CYCLE_NS, 0, 0, SYNC_ROW_PULSE_NS);
-			}
-			psync_ctrl->slot_step   = 3;
-			psync_ctrl->field_count = 0;
-		}
-		else if (psync_ctrl->slot_step == 3)
-		{
-			uint16_t last_pulse = psync_ctrl->total_field_pulse - 8;
-			if (psync_ctrl->field_even == true)
-			{
-				last_pulse += 1;
-			}
-			if (psync_ctrl->field_count >= last_pulse)
-			{
-				psync_ctrl->field_even = !psync_ctrl->field_even;
 				psync_ctrl->pulse_count = 0;
+				psync_ctrl->field_type = SYNC_FIELD_ODD;
+				pwm_set_auto_reload_preload(false);
+				if (psync_ctrl->stop_output == false)
+				{
+					pwm_set_output(SYNC_ROW_CYCLE_NS, SYNC_ROW_PULSE_NS, SYNC_PIN19_PULSE_NS, SYNC_ROW_PULSE_NS);
+				}
+				else
+				{
+					pwm_set_output(SYNC_ROW_CYCLE_NS, 0, 0, SYNC_ROW_PULSE_NS);
+				}
+				if (psync_ctrl->video_type == SYNC_VIDEO_PAL)
+				{
+					psync_ctrl->max_pulse = SYNC_PAL_ROW_PULSE;
+				}
+				else if (psync_ctrl->video_type == SYNC_VIDEO_NTSC)
+				{
+					psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE;
+				}
+			}
+		}
+		else 
+		{
+			if (psync_ctrl->field_count >= SYNC_SLOT_PULSE * 3 - 1)
+			{
+				psync_ctrl->pulse_count = 0;
+				psync_ctrl->field_type = SYNC_FIELD_EVEN;
+				pwm_set_auto_reload_preload(true);
+				if (psync_ctrl->stop_output == false)
+				{
+					pwm_set_output(SYNC_ROW_CYCLE_NS, SYNC_ROW_PULSE_NS, SYNC_PIN19_PULSE_NS, SYNC_ROW_PULSE_NS);
+				}
+				else
+				{
+					pwm_set_output(SYNC_ROW_CYCLE_NS, 0, 0, SYNC_ROW_PULSE_NS);
+				}
+				
+				if (psync_ctrl->video_type == SYNC_VIDEO_PAL)
+				{
+					psync_ctrl->max_pulse = SYNC_PAL_ROW_PULSE+1;
+				}
+				else if (psync_ctrl->video_type == SYNC_VIDEO_NTSC)
+				{
+					psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE+1;
+				}
 			}
 		}
 	}
@@ -154,12 +160,59 @@ static void sync_pwm_interrupt_callback(void *pcontent)
 }
 
 /** @brief   检测到同步头信号回调
- *  @param   pcontent[in] 
+ *  @param   video_type[in] 视频类型
+ *  @param   field_type[in] 奇偶场
  *  @return  无
  *  @note    
  */
-static void sync_detect_callbacks(void *pcontent)
+static void sync_detect_callbacks(sync_video_type_t video_type, sync_field_type_t field_type)
 {
+	if (video_type == SYNC_VIDEO_UNKNOWN || field_type == SYNC_FIELD_UNKNOWN)
+	{
+		DEBUG_INFO("sync detect err");
+		return;
+	}
+	
+	psync_ctrl->video_type  = video_type;
+	psync_ctrl->field_type  = field_type;
+	psync_ctrl->field_count = 0;
+	psync_ctrl->pulse_count = 0;
+	
+	if (video_type == SYNC_VIDEO_PAL)
+	{
+		psync_ctrl->max_pulse = SYNC_PAL_ROW_PULSE;
+		if (field_type == SYNC_FIELD_ODD)
+		{
+			psync_ctrl->max_pulse = SYNC_PAL_ROW_PULSE;
+		}
+		else if (field_type == SYNC_FIELD_EVEN)
+		{
+			psync_ctrl->max_pulse = SYNC_PAL_ROW_PULSE + 1;
+		}
+	}
+	else if (video_type == SYNC_VIDEO_NTSC)
+	{
+		psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE;
+		if (field_type == SYNC_FIELD_ODD)
+		{
+			psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE;
+		}
+		else if (field_type == SYNC_FIELD_EVEN)
+		{
+			psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE + 1;
+		}
+	}
+	if (psync_ctrl->stop_output == true)
+	{
+		pwm_set_output(SYNC_ROW_CYCLE_NS, 
+		               SYNC_ROW_PULSE_NS, 
+		               SYNC_PIN19_PULSE_NS, 
+		               SYNC_ROW_PULSE_NS);
+	}
+	else
+	{
+		pwm_set_output(SYNC_ROW_CYCLE_NS, 0, 0, SYNC_ROW_PULSE_NS);
+	}
 }
 
 /** @brief   1MS回调函数
@@ -169,21 +222,19 @@ static void sync_detect_callbacks(void *pcontent)
  */
 static void sync_1ms_callback(void *pcontent)
 {
+	psync_ctrl->keep_output_ms++;
 	if (rssi_get_is_both_weak() == false)
 	{
-		sync_keep_output_ms = 0;
+		psync_ctrl->stop_output = true;
+		psync_ctrl->keep_output_ms = 0;
 		return;
 	}
 	
-	if (sync_keep_output_ms < UINT16_MAX)
-	{
-		sync_keep_output_ms++;
-	}
-	
 	// 停止同步头信号输出
-	if (sync_keep_output_ms == SYNC_KEEP_OUTPUT_MS)
+	if ((psync_ctrl->keep_output_ms == SYNC_KEEP_OUTPUT_MS) && 
+		(psync_ctrl->stop_output == false))
 	{
-		psync_ctrl->pin18_19_stop = true;
+		psync_ctrl->stop_output = true;
 		pwm_pin18_pin19_stop();
 		pin22_output_ctrl(GPIO_PIN_SET);
 	}
@@ -197,7 +248,7 @@ static void sync_1ms_callback(void *pcontent)
 CONFIG_RESULT_T sync_head_ctrl_init(void)
 {
 	pwm_interrupt_cb_reg(sync_pwm_interrupt_callback);
-	systick_1ms_cb_reg(sync_1ms_callback);
+//	systick_1ms_cb_reg(sync_1ms_callback);
 	
 	return RESULT_SUCCESS;
 }

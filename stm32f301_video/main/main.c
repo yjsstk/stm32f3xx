@@ -136,9 +136,9 @@ int main(void)
 	pwm_ctrl_init();
 	adc_init();
     
-    MX_COMP2_Init();
-    MX_DAC_Init();
-    MX_TIM2_Init();
+//    MX_COMP2_Init();
+//    MX_DAC_Init();
+//    MX_TIM2_Init();
 	
 	#if (CONFIG_WATCHDOG_EN == 1)
 	watchdog_init();

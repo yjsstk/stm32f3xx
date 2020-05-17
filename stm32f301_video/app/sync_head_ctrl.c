@@ -156,7 +156,8 @@ static void sync_pwm_event_handle(void *parg, uint16_t arg_size)
  */
 static void sync_pwm_interrupt_callback(void *pcontent)
 {
-	app_scheduler_put(sync_pwm_event_handle, NULL, 0);
+	sync_pwm_event_handle(NULL, 0);
+//	app_scheduler_put(sync_pwm_event_handle, NULL, 0);
 }
 
 /** @brief   检测到同步头信号回调

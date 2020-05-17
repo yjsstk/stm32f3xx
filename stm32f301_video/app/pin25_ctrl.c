@@ -8,6 +8,12 @@
  *  @note     有其中一个RSSI电压大于0.9V时，MCU_24不能输出500MS高位
  */
 
+#include "config.h"
+#if (CONFIG_DEBUG_EN == 1)
+#define DEBUG_INFO_EN       1
+#define DEBUG_MODULE_NAME   "PIN25"
+#endif
+#include "debug.h"
 #include "pin25_ctrl.h"
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_gpio.h"
@@ -48,9 +54,11 @@ void pin25_exti15_interrupt_handler(void *pcontent)
 	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == GPIO_PIN_RESET)
 	{
 		pin25_ms_count = 0;
+		DEBUG_INFO("GPIO_PIN_25 is reset");
 	}
 	else 
 	{
+		DEBUG_INFO("GPIO_PIN_25 is set");
 		if ((pin25_ms_count >= PIN25_MS_COUNT - PIN25_COUNT_ERR) 
 		 || (pin25_ms_count <= PIN25_MS_COUNT + PIN25_COUNT_ERR))
 		{
@@ -76,7 +84,7 @@ CONFIG_RESULT_T pin25_ctrl_init(void)
 
 	GPIO_InitStructure.Pin = GPIO_PIN_15;
 	GPIO_InitStructure.Mode = GPIO_MODE_IT_RISING_FALLING;
-	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
 	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
 

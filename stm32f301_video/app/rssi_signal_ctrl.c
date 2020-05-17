@@ -40,7 +40,7 @@ typedef struct
 	uint16_t rssi_bot_min;                       // RSSI_BOT最小值
 }rssi_status_t;
 
-static rssi_status_t rssi_status;
+static volatile rssi_status_t rssi_status;
 
 /** @brief   RSSI信号平均值计算
  *  @param   无
@@ -62,18 +62,18 @@ static void rssi_signal_avg_calc(void)
 	rssi_status.rssi_top_avg = top_val / number;
 	rssi_status.rssi_bot_avg = bot_val / number;
 	
-	DEBUG_INFO("numb: %d, loss: %d, top_avg: %d, bot_avg: %d", 
-	            rssi_rx_number, rssi_lost_time, rssi_status.rssi_top_avg, rssi_status.rssi_bot_avg);
+//	DEBUG_INFO("numb: %d, loss: %d, top_avg: %d, bot_avg: %d", 
+//	            rssi_rx_number, rssi_lost_time, rssi_status.rssi_top_avg, rssi_status.rssi_bot_avg);
 	
-	if (rssi_status.rssi_top_min > top_val)
+	if (rssi_status.rssi_top_min > rssi_status.rssi_top_avg)
 	{
-		rssi_status.rssi_top_min = top_val;
-		DEBUG_INFO("rssi_top_min: %d", top_val);
+		rssi_status.rssi_top_min = rssi_status.rssi_top_avg;
+		DEBUG_INFO("rssi_top_min: %d", rssi_status.rssi_top_avg);
 	}
-	if (rssi_status.rssi_bot_min > bot_val)
+	if (rssi_status.rssi_bot_min > rssi_status.rssi_bot_avg)
 	{
-		rssi_status.rssi_bot_min = bot_val;
-		DEBUG_INFO("rssi_bot_min: %d", bot_val);
+		rssi_status.rssi_bot_min = rssi_status.rssi_bot_avg;
+		DEBUG_INFO("rssi_bot_min: %d", rssi_status.rssi_bot_avg);
 	}
 }
 
@@ -84,7 +84,7 @@ static void rssi_signal_avg_calc(void)
  */
 static void rssi_video_sw_ctrl_deal(void)
 {
-	PIN12_VIDEO_SEL_T sw_sel = PIN12_SEL_UNKNOWN;
+	PIN12_VIDEO_SEL_T sw_sel = rssi_pin12_status;
 	
 	if (rssi_status.rssi_top_avg >= RSSI_1V_VALUE) 
 	{
@@ -94,29 +94,28 @@ static void rssi_video_sw_ctrl_deal(void)
 	{
 		sw_sel = PIN12_SEL_VI2_BOT;
 	}
-	else if (rssi_status.rssi_top_avg == rssi_status.rssi_top_min)
+	else
 	{
-		sw_sel = PIN12_SEL_VI2_BOT;
-	}
-	else if (rssi_status.rssi_bot_avg == rssi_status.rssi_bot_min)
-	{
-		sw_sel = PIN12_SEL_VI1_TOP;
-	}
-	else if (rssi_status.rssi_top_avg > rssi_status.rssi_bot_avg) 
-	{
-		sw_sel = PIN12_SEL_VI1_TOP;
-	}
-	else if (rssi_status.rssi_bot_avg > rssi_status.rssi_top_avg)
-	{
-		sw_sel = PIN12_SEL_VI2_BOT;
+		uint16_t top_val = rssi_status.rssi_top_avg - rssi_status.rssi_top_min;
+		uint16_t bot_val = rssi_status.rssi_bot_avg - rssi_status.rssi_bot_min;
+		
+//		DEBUG_INFO("top_vag: %d, top_min: %d",rssi_status.rssi_top_avg, rssi_status.rssi_top_min);
+//		DEBUG_INFO("bot_val: %d, bot_min: %d",rssi_status.rssi_bot_avg, rssi_status.rssi_bot_min);
+//		DEBUG_INFO("top_val: %d, bot_val: %d", top_val, bot_val);
+		if (top_val > bot_val)
+		{
+			sw_sel = PIN12_SEL_VI1_TOP;
+		}
+		else if (top_val < bot_val)
+		{
+			sw_sel = PIN12_SEL_VI2_BOT;
+		}
 	}
 	
 	if (sw_sel != rssi_pin12_status)
 	{
-		DEBUG_INFO("rssi_top_avg: %d, rssi_bot_avg: %d", 
-		            rssi_status.rssi_top_avg, rssi_status.rssi_bot_avg);
 		DEBUG_INFO("video ctrl by sw, sel: %s", 
-		            sw_sel == PIN12_SEL_VI2_BOT ? "BOT" : "TOP");
+		            (sw_sel == PIN12_SEL_VI2_BOT) ? "BOT" : "TOP");
 		rssi_pin12_status = sw_sel;
 		pin12_set_video_ctrl(sw_sel);
 	}

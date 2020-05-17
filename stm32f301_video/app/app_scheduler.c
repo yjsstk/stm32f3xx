@@ -104,6 +104,7 @@ CONFIG_RESULT_T app_scheduler_put(
 	}
 	if (arg_size > CONFIG_APP_SCHEDULER_EVENT_SIZE)
 	{
+		DEBUG_INFO("arg_size err");
 		return RESULT_INVALID_SIZE;
 	}
 
@@ -117,6 +118,7 @@ CONFIG_RESULT_T app_scheduler_put(
 	__set_PRIMASK(0);
 	if (index == UINT16_MAX)
 	{
+		DEBUG_INFO("app scheduler is full");
 		return RESULT_FULL;
 	}
 	

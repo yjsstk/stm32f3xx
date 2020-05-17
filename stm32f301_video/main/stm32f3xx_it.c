@@ -174,7 +174,7 @@ void EXTI0_IRQHandler(void)
   */
 void EXTI15_10_IRQHandler(void)
 {
-	if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_15) == SET)
+	if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_15) == GPIO_PIN_15)
 	{
 		__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_15);
 		pin25_exti15_interrupt_handler(NULL);
@@ -190,6 +190,11 @@ void DMA1_Channel1_IRQHandler(void)
 {
 	adc_dma_isr_cb();
 }
+
+//void ADC1_IRQHandler(void)
+//{
+//	adc_dma_isr_cb();
+//}
 
 /******************************************************************************/
 /* STM32F3xx Peripheral Interrupt Handlers                                    */

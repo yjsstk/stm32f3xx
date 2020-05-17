@@ -21,6 +21,7 @@
 #include "app_scheduler.h"
 #include <string.h>
 #include <stdbool.h>
+#include "systick.h"
 
 static padc_value_change_cb_t padc_value_change_cb=NULL;
 
@@ -50,6 +51,13 @@ static void adc_value_deal(void *parg, uint16_t size)
 	}
 	first_half = !first_half;
 	
+//	DEBUG_PRINTF("adc_dma_buff: ");
+//	for (uint8_t n=0; n<ADC_DMA_BUFF_LEN; n++)
+//	{
+//		DEBUG_PRINTF("%d ", adc_dma_buff[n]);
+//	}
+//	DEBUG_PRINTF("\r\n");
+	
 	memset(adc_add_sum, 0, sizeof(adc_add_sum));
 	for (uint16_t i=0; i<ADC_DMA_BUFF_LEN / 2; i++)
 	{
@@ -77,8 +85,12 @@ static void adc_value_deal(void *parg, uint16_t size)
  */
 void adc_dma_isr_cb(void)
 {
-	app_scheduler_put(adc_value_deal, NULL, 0);
-	__HAL_DMA_CLEAR_FLAG(&DmaHandle, DMA_FLAG_GL1 | DMA_FLAG_TC1 | DMA_FLAG_HT1);
+	if (__HAL_DMA_GET_FLAG(&DmaHandle, DMA_FLAG_TE1) != DMA_FLAG_TE1)
+	{
+		app_scheduler_put(adc_value_deal, NULL, 0);
+	}
+	HAL_ADC_Stop_DMA(&AdcHandle);
+	__HAL_DMA_CLEAR_FLAG(&DmaHandle, DMA_FLAG_TE1 | DMA_FLAG_TC1 | DMA_FLAG_HT1);
 }
 
 /** @brief   注册ADC值改变回调函数
@@ -89,6 +101,25 @@ void adc_dma_isr_cb(void)
 void adc_value_change_reg(padc_value_change_cb_t func)
 {
 	padc_value_change_cb = func;
+}
+
+/** @brief   用于控制ADC采样时间
+ *  @param   func[in] 
+ *  @return  无
+ *  @note    
+ */
+static void adc_sample_1ms_cb(void *pcontent)
+{
+	static uint8_t sample_time_ctrl=0;
+	
+	if (sample_time_ctrl++ >= 5)
+	{
+		sample_time_ctrl = 0;
+		HAL_ADC_Start_DMA(&AdcHandle,
+						  (uint32_t *)adc_dma_buff,
+						   ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN
+						   );
+	}
 }
 
 /** @brief   该模块的应用初始化函数 
@@ -117,13 +148,13 @@ CONFIG_RESULT_T adc_init(void)
 		return RESULT_ERROR;
 	}
 
-	AdcHandle.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV4;      /* Synchronous clock mode, input ADC clock divided by 2*/
+	AdcHandle.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV1;      /* Synchronous clock mode, input ADC clock divided by 2*/
 	AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;            /* 12-bit resolution for converted data */
 	AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;           /* Right-alignment for converted data */
 	AdcHandle.Init.ScanConvMode          = ENABLE;                       /* Sequencer disabled (ADC conversion on only 1 channel: channel set on rank 1) */
 	AdcHandle.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;           /* EOC flag picked-up to indicate conversion end */
 	AdcHandle.Init.LowPowerAutoWait      = DISABLE;                       /* Auto-delayed conversion feature disabled */
-	AdcHandle.Init.ContinuousConvMode    = ENABLE;                        /* Continuous mode enabled (automatic conversion restart after each conversion) */
+	AdcHandle.Init.ContinuousConvMode    = DISABLE;                        /* Continuous mode enabled (automatic conversion restart after each conversion) */
 	AdcHandle.Init.NbrOfConversion       = ADC_CHANNEL_NUMB;             /* Parameter discarded because sequencer is disabled */
 	AdcHandle.Init.DiscontinuousConvMode = ENABLE;                       /* Parameter discarded because sequencer is disabled */
 	AdcHandle.Init.NbrOfDiscConversion   = 1;                             /* Parameter discarded because sequencer is disabled */
@@ -144,7 +175,7 @@ CONFIG_RESULT_T adc_init(void)
 	DmaHandle.Init.MemInc              = DMA_MINC_ENABLE;
 	DmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
 	DmaHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
-	DmaHandle.Init.Mode                = DMA_CIRCULAR;
+	DmaHandle.Init.Mode                = DMA_NORMAL;
 	DmaHandle.Init.Priority            = DMA_PRIORITY_MEDIUM;
 	/* Deinitialize  & Initialize the DMA for new transfer */
 	HAL_DMA_DeInit(&DmaHandle);
@@ -157,7 +188,7 @@ CONFIG_RESULT_T adc_init(void)
 	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 3, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn); 
 
-//	HAL_NVIC_SetPriority(ADC1_IRQn, 0, 0);
+//	HAL_NVIC_SetPriority(ADC1_IRQn, 3, 0);
 //	HAL_NVIC_EnableIRQ(ADC1_IRQn);
 	
 
@@ -171,7 +202,7 @@ CONFIG_RESULT_T adc_init(void)
 	/* ### - 3 - Channel configuration ######################################## */
 	sConfig.Channel      = ADC_CHANNEL_1;                /* Sampled channel number */
 	sConfig.Rank         = ADC_REGULAR_RANK_1;          /* Rank of sampled channel number ADCx_CHANNEL */
-	sConfig.SamplingTime = ADC_SAMPLETIME_601CYCLES_5;   /* Sampling time (number of clock cycles unit) */
+	sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;   /* Sampling time (number of clock cycles unit) */
 	sConfig.SingleDiff   = ADC_SINGLE_ENDED;            /* Single-ended input channel */
 	sConfig.OffsetNumber = ADC_OFFSET_NONE;             /* No offset subtraction */ 
 	sConfig.Offset = 0;                                 /* Parameter discarded because offset correction is disabled */
@@ -185,7 +216,6 @@ CONFIG_RESULT_T adc_init(void)
 
 	if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK)
 	{
-		/* Channel Configuration Error */
 	}
 
 	/* ### - 4 - Start conversion in DMA mode ################################# */
@@ -196,7 +226,8 @@ CONFIG_RESULT_T adc_init(void)
 	{
 		return RESULT_ERROR;
 	}
-	HAL_ADC_Start(&AdcHandle);
+	
+	systick_1ms_cb_reg(adc_sample_1ms_cb);
   
 	return RESULT_SUCCESS;
 }

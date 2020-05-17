@@ -22,6 +22,8 @@
 
 static ppwm_interrupt_cb_t pwm_interrupt_cb = NULL;
 static TIM_HandleTypeDef   TimHandle;
+static TIM_OC_InitTypeDef sConfig;
+
 static uint32_t pwm_cycle_ns       = 64000;
 static uint32_t pwm_pin18_pulse_ns = 4700;
 static uint32_t pwm_pin19_pulse_ns = 10000;
@@ -86,6 +88,20 @@ void pwm_set_output(
 	TimHandle.Instance->CCR1 = PWM_NS_TO_72MHZ_CNT(pin18_pulse_ns);
 	TimHandle.Instance->CCR2 = PWM_NS_TO_72MHZ_CNT(pin19_pulse_ns);
 	TimHandle.Instance->CCR4 = PWM_NS_TO_72MHZ_CNT(pin21_pulse_ns);
+	
+	pwm_cycle_ns       = cycle_ns;
+	pwm_pin18_pulse_ns = pin18_pulse_ns;
+	pwm_pin19_pulse_ns = pin19_pulse_ns;
+	pwm_pin21_pulse_ns = pin21_pulse_ns;
+}
+
+/** @brief   设置定时器计数值
+ *  @param   cnt_val[in] 计数值
+ *  @return  无
+ */
+inline void pwm_set_time_cnt_val(uint32_t cnt_val)
+{
+	__HAL_TIM_SET_COUNTER(&TimHandle, cnt_val);
 }
 
 /** @brief   设置ARR自动重装的状态
@@ -186,8 +202,6 @@ CONFIG_RESULT_T pwm_ctrl_init(void)
   
 	/*##-2- Configure the PWM channels #########################################*/
 	/* Common configuration for all channels */
-	TIM_OC_InitTypeDef sConfig;
-
 	sConfig.OCMode       = TIM_OCMODE_PWM1;
 	sConfig.OCPolarity   = TIM_OCPOLARITY_HIGH;
 	sConfig.OCFastMode   = TIM_OCFAST_DISABLE;
@@ -222,10 +236,6 @@ CONFIG_RESULT_T pwm_ctrl_init(void)
 	{
 		return RESULT_ERROR;
 	}
-//	if (HAL_TIMEx_PWMN_Start(&TimHandle, TIM_CHANNEL_1)!= HAL_OK)
-//	{
-//		return RESULT_ERROR;
-//	}
 	if (HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_2) != HAL_OK)
 	{
 		return RESULT_ERROR;

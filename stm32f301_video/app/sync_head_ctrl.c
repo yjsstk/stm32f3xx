@@ -15,6 +15,7 @@
 #include "debug.h"
 
 #include <stdint.h>
+#include <string.h>
 #include <stdbool.h>
 #include "sync_head_ctrl.h"
 #include "systick.h"
@@ -174,39 +175,45 @@ static void sync_event_ctrl(sync_video_type_t video_type, sync_field_type_t fiel
 		DEBUG_INFO("sync detect err");
 		return;
 	}
+	sync_ctrl_t sync_ctrl;
 	
-	psync_ctrl->video_type  = video_type;
-	psync_ctrl->field_type  = field_type;
-	psync_ctrl->field_count = 0;
-	psync_ctrl->pulse_count = 0;
+	sync_ctrl.stop_output = false;
+	sync_ctrl.video_type  = video_type;
+	sync_ctrl.field_type  = field_type;
+	sync_ctrl.field_count = 0;
+	sync_ctrl.pulse_count = 0;
 	
 	if (video_type == SYNC_VIDEO_PAL)
 	{
-		psync_ctrl->max_pulse = SYNC_PAL_ROW_PULSE;
+		sync_ctrl.max_pulse = SYNC_PAL_ROW_PULSE;
 		if (field_type == SYNC_FIELD_ODD)
 		{
-			psync_ctrl->max_pulse = SYNC_PAL_ROW_PULSE;
+			sync_ctrl.max_pulse = SYNC_PAL_ROW_PULSE;
 		}
 		else if (field_type == SYNC_FIELD_EVEN)
 		{
-			psync_ctrl->max_pulse = SYNC_PAL_ROW_PULSE + 1;
+			sync_ctrl.max_pulse = SYNC_PAL_ROW_PULSE + 1;
 		}
 	}
 	else if (video_type == SYNC_VIDEO_NTSC)
 	{
-		psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE;
+		sync_ctrl.max_pulse = SYNC_NTSC_ROW_PULSE;
 		if (field_type == SYNC_FIELD_ODD)
 		{
-			psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE;
+			sync_ctrl.max_pulse = SYNC_NTSC_ROW_PULSE;
 		}
 		else if (field_type == SYNC_FIELD_EVEN)
 		{
-			psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE + 1;
+			sync_ctrl.max_pulse = SYNC_NTSC_ROW_PULSE + 1;
 		}
 	}
 	
+	__set_PRIMASK(1);
+	memcpy(psync_ctrl, &sync_ctrl, sizeof(sync_ctrl));
+	__set_PRIMASK(0);
+	
 	pwm_set_auto_reload_preload(false);
-	if (psync_ctrl->stop_output == true)
+	if (psync_ctrl->stop_output == false)
 	{
 		pwm_set_output(SYNC_ROW_CYCLE_NS, 
 		               SYNC_ROW_PULSE_NS, 
@@ -217,6 +224,7 @@ static void sync_event_ctrl(sync_video_type_t video_type, sync_field_type_t fiel
 	{
 		pwm_set_output(SYNC_ROW_CYCLE_NS, 0, 0, SYNC_ROW_PULSE_NS);
 	}
+	pwm_set_time_cnt_val(0);
 }
 
 /** @brief   1MS回调函数
@@ -226,6 +234,7 @@ static void sync_event_ctrl(sync_video_type_t video_type, sync_field_type_t fiel
  */
 static void sync_tim_detect_cb(filed_cycle_t filed_cycle)
 {
+//	DEBUG_INFO("%d", psync_ctrl->pulse_count);
 	if (filed_cycle == FILED_CYCLE_50HZ_ODD)
 	{
 		sync_event_ctrl(SYNC_VIDEO_PAL, SYNC_FIELD_ODD);
@@ -241,6 +250,10 @@ static void sync_tim_detect_cb(filed_cycle_t filed_cycle)
 	else if (filed_cycle == FILED_CYCLE_60HZ_EVEN)
 	{
 		sync_event_ctrl(SYNC_VIDEO_NTSC, SYNC_FIELD_EVEN);
+	}
+	if (filed_cycle != FILED_CYCLE_UNKNOWN)
+	{
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
 	}
 }
 

@@ -48,7 +48,13 @@ extern void pwm_set_output(
  *  @param   status[in] 启用或禁用自动重装功能
  *  @return  无
  */
-void pwm_set_auto_reload_preload(bool status);
+extern void pwm_set_auto_reload_preload(bool status);
+
+/** @brief   设置定时器计数值
+ *  @param   cnt_val[in] 计数值
+ *  @return  无
+ */
+extern inline void pwm_set_time_cnt_val(uint32_t cnt_val);
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 

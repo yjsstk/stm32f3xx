@@ -141,7 +141,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 #define FIELD_CYCLE_50HZ_US         (20000ul)
 #define FIELD_CYCLE_60HZ_US         (16667ul)
 #define FIELD_CYCLE_TOLERANCE_US    (10)  // @note must <32
-#define TICK_TO_US(n)                (n / 72ul) // TODO
+#define TICK_TO_US(n)                ( (n) / 72ul) // TODO
 
 void (*m_capture_fied_cycle_evt_handler)(filed_cycle_t filed_cycle) = NULL;
 
@@ -154,33 +154,33 @@ void tim_field_cycle_capture_evt_reg(void (*evt)(filed_cycle_t filed_cycle))
 // @brief 检验场周期
 static inline filed_cycle_t check_field_cycle(uint32_t cycle_us)
 {
-    if ( cycle_us >= FIELD_CYCLE_50HZ_US - FIELD_CYCLE_TOLERANCE_US ||
-         cycle_us <= FIELD_CYCLE_50HZ_US + FIELD_CYCLE_TOLERANCE_US )
-    {
-        DEBUG_INFO("<check_field_cycle> FILED_CYCLE_50HZ_ODD");
-         
-        return FILED_CYCLE_50HZ_ODD;
-    }
-    else if ( cycle_us >= FIELD_CYCLE_50HZ_US + 64 - FIELD_CYCLE_TOLERANCE_US ||
-              cycle_us <= FIELD_CYCLE_50HZ_US + 64 + FIELD_CYCLE_TOLERANCE_US )
-    {
-        DEBUG_INFO("<check_field_cycle> FILED_CYCLE_50HZ_EVEN");
-         
-        return FILED_CYCLE_50HZ_EVEN;
-    }
-    else if ( cycle_us >= FIELD_CYCLE_60HZ_US - FIELD_CYCLE_TOLERANCE_US ||
-              cycle_us <= FIELD_CYCLE_60HZ_US + FIELD_CYCLE_TOLERANCE_US )
+    if ( cycle_us >= FIELD_CYCLE_60HZ_US - FIELD_CYCLE_TOLERANCE_US ||
+         cycle_us <= FIELD_CYCLE_60HZ_US + FIELD_CYCLE_TOLERANCE_US )
     {
         DEBUG_INFO("<check_field_cycle> FILED_CYCLE_60HZ_ODD");
-        
+         
         return FILED_CYCLE_60HZ_ODD;
     }
     else if ( cycle_us >= FIELD_CYCLE_60HZ_US + 64 - FIELD_CYCLE_TOLERANCE_US ||
               cycle_us <= FIELD_CYCLE_60HZ_US + 64 + FIELD_CYCLE_TOLERANCE_US )
     {
         DEBUG_INFO("<check_field_cycle> FILED_CYCLE_60HZ_EVEN");
+         
+        return FILED_CYCLE_60HZ_EVEN;
+    }
+    else if ( cycle_us >= FIELD_CYCLE_50HZ_US - FIELD_CYCLE_TOLERANCE_US ||
+              cycle_us <= FIELD_CYCLE_50HZ_US + FIELD_CYCLE_TOLERANCE_US )
+    {
+        DEBUG_INFO("<check_field_cycle> FILED_CYCLE_50HZ_ODD");
         
-        return FILED_CYCLE_60HZ_ODD;
+        return FILED_CYCLE_50HZ_ODD;
+    }
+    else if ( cycle_us >= FIELD_CYCLE_50HZ_US + 64 - FIELD_CYCLE_TOLERANCE_US ||
+              cycle_us <= FIELD_CYCLE_50HZ_US + 64 + FIELD_CYCLE_TOLERANCE_US )
+    {
+        DEBUG_INFO("<check_field_cycle> FILED_CYCLE_50HZ_EVEN");
+        
+        return FILED_CYCLE_50HZ_EVEN;
     }
 
     DEBUG_INFO("<check_field_cycle> FILED_CYCLE_UNKNOWN");
@@ -219,7 +219,7 @@ static inline void capture_sync_head(uint32_t time_tick, void (*has_capture_head
             capture_times = 0;
         }
 
-        if (capture_times >= 3)
+        if (capture_times >= 18)
         {
             capture_times = 0;
             enable = false;
@@ -266,6 +266,7 @@ static inline void capture_head_evt_handler(uint32_t time_tick)
     }
     else
     {
+		m_field_capture_cycle.is_capture_start = true;
         m_field_capture_cycle.start_capture_time = time_tick;
     }
 }

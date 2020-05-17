@@ -22,6 +22,7 @@
 #include "pin22_ctrl.h"
 #include "rssi_signal_ctrl.h"
 #include "app_scheduler.h"
+#include "tim.h"
 
 typedef struct
 {
@@ -166,7 +167,7 @@ static void sync_pwm_interrupt_callback(void *pcontent)
  *  @return  无
  *  @note    
  */
-static void sync_detect_callbacks(sync_video_type_t video_type, sync_field_type_t field_type)
+static void sync_event_ctrl(sync_video_type_t video_type, sync_field_type_t field_type)
 {
 	if (video_type == SYNC_VIDEO_UNKNOWN || field_type == SYNC_FIELD_UNKNOWN)
 	{
@@ -221,12 +222,37 @@ static void sync_detect_callbacks(sync_video_type_t video_type, sync_field_type_
  *  @return  无
  *  @note    
  */
+static void sync_tim_detect_cb(filed_cycle_t filed_cycle)
+{
+	if (filed_cycle == FILED_CYCLE_50HZ_ODD)
+	{
+		sync_event_ctrl(SYNC_VIDEO_PAL, SYNC_FIELD_ODD);
+	}
+	else if (filed_cycle == FILED_CYCLE_50HZ_EVEN)
+	{
+		sync_event_ctrl(SYNC_VIDEO_PAL, SYNC_FIELD_EVEN);
+	}
+	else if (filed_cycle == FILED_CYCLE_60HZ_ODD)
+	{
+		sync_event_ctrl(SYNC_VIDEO_NTSC, SYNC_FIELD_ODD);
+	}
+	else if (filed_cycle == FILED_CYCLE_60HZ_EVEN)
+	{
+		sync_event_ctrl(SYNC_VIDEO_NTSC, SYNC_FIELD_EVEN);
+	}
+}
+
+/** @brief   1MS回调函数
+ *  @param   pcontent[in] 
+ *  @return  无
+ *  @note    
+ */
 static void sync_1ms_callback(void *pcontent)
 {
 	psync_ctrl->keep_output_ms++;
 	if (rssi_get_is_both_weak() == false)
 	{
-		psync_ctrl->stop_output = true;
+		psync_ctrl->stop_output = false;
 		psync_ctrl->keep_output_ms = 0;
 		return;
 	}
@@ -249,6 +275,7 @@ static void sync_1ms_callback(void *pcontent)
 CONFIG_RESULT_T sync_head_ctrl_init(void)
 {
 	pwm_interrupt_cb_reg(sync_pwm_interrupt_callback);
+	tim_field_cycle_capture_evt_reg(sync_tim_detect_cb);
 //	systick_1ms_cb_reg(sync_1ms_callback);
 	
 	return RESULT_SUCCESS;

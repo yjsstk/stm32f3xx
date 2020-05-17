@@ -188,16 +188,9 @@ static inline filed_cycle_t check_field_cycle(uint32_t cycle_us)
     return FILED_CYCLE_UNKNOWN;
 }
 
-// @brief 场周期捕获
-typedef struct
-{
-    bool    is_capture_start;       // 捕获到场周期开始
-    uint32_t start_capture_time;    // 场周期开始点捕获的时间
-    uint32_t end_capture_time;      // 场周期结束点捕获的时间
-    
-}field_capture_cycle_t;
 
-volatile field_capture_cycle_t m_field_capture_cycle = {0};
+static uint32_t m_time_base_cycle_count;  // 时间基定时器走过的周期数
+
 
 // @brief 是否捕获到同步头
 static inline void capture_sync_head(uint32_t time_tick, void (*has_capture_head_evt)(uint32_t timestamp))
@@ -247,28 +240,32 @@ static inline void capture_sync_head(uint32_t time_tick, void (*has_capture_head
 // @brief 捕获到场同步头事件
 static inline void capture_head_evt_handler(uint32_t time_tick)
 {
-    uint32_t count, cycle_us;
-    
-    if (m_field_capture_cycle.is_capture_start)
-    {
-        m_field_capture_cycle.end_capture_time = time_tick;
-        
-        m_field_capture_cycle.is_capture_start = false;
-               
-        cycle_us = m_field_capture_cycle.end_capture_time - m_field_capture_cycle.start_capture_time;
-        
+    uint32_t count;
+    static uint32_t pre_time_tick = 0;
 
-        if (m_capture_fied_cycle_evt_handler != NULL)
-        {
-           m_capture_fied_cycle_evt_handler( check_field_cycle(TICK_TO_US(cycle_us)) );
-        }
-        
-    }
-    else
+    count = m_time_base_cycle_count;
+    m_time_base_cycle_count = 0;
+    
+
+    if (count > 1)
     {
-		m_field_capture_cycle.is_capture_start = true;
-        m_field_capture_cycle.start_capture_time = time_tick;
+        DEBUG_INFO("<capture_head_evt_handler> out time capture");
+
+        // 
+        // 本场与上场之间超时
+        // 视为无效场周期
+        //
+        pre_time_tick = time_tick;
+
+        return ;
     }
+
+    if (m_capture_fied_cycle_evt_handler != NULL)
+    {
+       m_capture_fied_cycle_evt_handler( check_field_cycle(TICK_TO_US(time_tick - pre_time_tick)) );
+    }
+
+    pre_time_tick = time_tick;
 }
 
 uint32_t g_cap_value[100] = {0};
@@ -291,9 +288,10 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    static uint8_t tick = 0;
+    // static uint8_t tick = 0;
     
-   // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, tick++ & 1);
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, tick++ & 1);
+    m_time_base_cycle_count ++;
     
 }
 

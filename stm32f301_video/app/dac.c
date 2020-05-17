@@ -46,6 +46,9 @@ void MX_DAC_Init(void)
   {
     Error_Handler();
   }
+  
+  HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1005);
+   HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 
 }
 
@@ -72,8 +75,7 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
 
   /* USER CODE BEGIN DAC_MspInit 1 */
   /* …Ë÷√ ‰≥ˆ50mv */
-   HAL_DAC_SetValue(dacHandle, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1005);
-   HAL_DAC_Start(dacHandle, DAC_CHANNEL_1);
+   
   /* USER CODE END DAC_MspInit 1 */
   }
 }

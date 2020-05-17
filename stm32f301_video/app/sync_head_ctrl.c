@@ -204,6 +204,8 @@ static void sync_event_ctrl(sync_video_type_t video_type, sync_field_type_t fiel
 			psync_ctrl->max_pulse = SYNC_NTSC_ROW_PULSE + 1;
 		}
 	}
+	
+	pwm_set_auto_reload_preload(false);
 	if (psync_ctrl->stop_output == true)
 	{
 		pwm_set_output(SYNC_ROW_CYCLE_NS, 
@@ -276,7 +278,7 @@ CONFIG_RESULT_T sync_head_ctrl_init(void)
 {
 	pwm_interrupt_cb_reg(sync_pwm_interrupt_callback);
 	tim_field_cycle_capture_evt_reg(sync_tim_detect_cb);
-//	systick_1ms_cb_reg(sync_1ms_callback);
+	systick_1ms_cb_reg(sync_1ms_callback);
 	
 	return RESULT_SUCCESS;
 }

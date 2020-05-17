@@ -14,7 +14,7 @@
 #include <stdbool.h>
 
 #define RSSI_BUFFER_LEN     5        // MAX 255
-#define RSSI_1V_VALUE       1000     // 1V对应的值
+#define RSSI_1V_VALUE       1240     // 1V对应的值
 
 /** @brief   获取RSSI信号判断状态
  *  @param   无 

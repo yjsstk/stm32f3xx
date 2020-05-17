@@ -115,7 +115,8 @@ static void rssi_video_sw_ctrl_deal(void)
 	{
 		DEBUG_INFO("rssi_top_avg: %d, rssi_bot_avg: %d", 
 		            rssi_status.rssi_top_avg, rssi_status.rssi_bot_avg);
-		DEBUG_INFO("video ctrl by sw, sel: %d", sw_sel);
+		DEBUG_INFO("video ctrl by sw, sel: %s", 
+		            sw_sel == PIN12_SEL_VI2_BOT ? "BOT" : "TOP");
 		rssi_pin12_status = sw_sel;
 		pin12_set_video_ctrl(sw_sel);
 	}

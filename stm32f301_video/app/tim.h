@@ -40,6 +40,18 @@ void MX_TIM2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
+// @brief 场同步周期与类型
+typedef enum
+{
+  FILED_CYCLE_UNKNOWN,
+  FILED_CYCLE_50HZ_ODD,
+  FILED_CYCLE_50HZ_EVEN,
+  FILED_CYCLE_60HZ_ODD,  
+  FILED_CYCLE_60HZ_EVEN,
+}filed_cycle_t;
+
+void tim_field_cycle_capture_evt_reg(void (*evt)(filed_cycle_t filed_cycle));
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

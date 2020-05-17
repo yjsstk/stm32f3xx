@@ -21,7 +21,8 @@
 #include "tim.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "debug.h"
+#include "stdbool.h"
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim2;
@@ -36,7 +37,7 @@ void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 1000000-1;
+  htim2.Init.Period = 0xFFFFFFFF; // @note 固定为0xFFFFFFFF 不允许修改
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -61,7 +62,7 @@ void MX_TIM2_Init(void)
   sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter = 0;//3
+  sConfigIC.ICFilter = 3;//3
   if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
@@ -134,25 +135,156 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+
+
+// 场周期
+#define FIELD_CYCLE_50HZ_US         (20000ul)
+#define FIELD_CYCLE_60HZ_US         (16667ul)
+#define FIELD_CYCLE_TOLERANCE_US    (10)  // @note must <32
+#define TICK_TO_US(n)                (n / 72ul) // TODO
+
+void (*m_capture_fied_cycle_evt_handler)(filed_cycle_t filed_cycle) = NULL;
+
+// @brief 场周期捕获事件注册
+void tim_field_cycle_capture_evt_reg(void (*evt)(filed_cycle_t filed_cycle))
+{
+    m_capture_fied_cycle_evt_handler = evt;
+}
+
+// @brief 检验场周期
+static inline filed_cycle_t check_field_cycle(uint32_t cycle_us)
+{
+    if ( cycle_us >= FIELD_CYCLE_50HZ_US - FIELD_CYCLE_TOLERANCE_US ||
+         cycle_us <= FIELD_CYCLE_50HZ_US + FIELD_CYCLE_TOLERANCE_US )
+    {
+        DEBUG_INFO("<check_field_cycle> FILED_CYCLE_50HZ_ODD");
+         
+        return FILED_CYCLE_50HZ_ODD;
+    }
+    else if ( cycle_us >= FIELD_CYCLE_50HZ_US + 64 - FIELD_CYCLE_TOLERANCE_US ||
+              cycle_us <= FIELD_CYCLE_50HZ_US + 64 + FIELD_CYCLE_TOLERANCE_US )
+    {
+        DEBUG_INFO("<check_field_cycle> FILED_CYCLE_50HZ_EVEN");
+         
+        return FILED_CYCLE_50HZ_EVEN;
+    }
+    else if ( cycle_us >= FIELD_CYCLE_60HZ_US - FIELD_CYCLE_TOLERANCE_US ||
+              cycle_us <= FIELD_CYCLE_60HZ_US + FIELD_CYCLE_TOLERANCE_US )
+    {
+        DEBUG_INFO("<check_field_cycle> FILED_CYCLE_60HZ_ODD");
+        
+        return FILED_CYCLE_60HZ_ODD;
+    }
+    else if ( cycle_us >= FIELD_CYCLE_60HZ_US + 64 - FIELD_CYCLE_TOLERANCE_US ||
+              cycle_us <= FIELD_CYCLE_60HZ_US + 64 + FIELD_CYCLE_TOLERANCE_US )
+    {
+        DEBUG_INFO("<check_field_cycle> FILED_CYCLE_60HZ_EVEN");
+        
+        return FILED_CYCLE_60HZ_ODD;
+    }
+
+    DEBUG_INFO("<check_field_cycle> FILED_CYCLE_UNKNOWN");
+              
+    return FILED_CYCLE_UNKNOWN;
+}
+
+// @brief 场周期捕获
+typedef struct
+{
+    bool    is_capture_start;       // 捕获到场周期开始
+    uint32_t start_capture_time;    // 场周期开始点捕获的时间
+    uint32_t end_capture_time;      // 场周期结束点捕获的时间
+    
+}field_capture_cycle_t;
+
+volatile field_capture_cycle_t m_field_capture_cycle = {0};
+
+// @brief 是否捕获到同步头
+static inline void capture_sync_head(uint32_t time_tick, void (*has_capture_head_evt)(uint32_t timestamp))
+{
+    static uint8_t capture_times = 0;
+    static uint8_t delay_tick = 0;
+    static bool enable = false;
+    static uint32_t pre_time_tick = 0;
+    uint32_t cycle_us = TICK_TO_US(time_tick - pre_time_tick);
+
+    if (enable == true)
+    {
+        if (cycle_us >= 32 - 2 && cycle_us <= 32 + 2)
+        {
+            capture_times ++;
+        }
+        else
+        {
+            capture_times = 0;
+        }
+
+        if (capture_times >= 3)
+        {
+            capture_times = 0;
+            enable = false;
+            delay_tick = 0;
+            if (has_capture_head_evt != NULL)
+            {
+                has_capture_head_evt(time_tick);
+            }
+        }
+    }
+    else
+    {
+        if (delay_tick < 20)
+        {
+            if ( ++ delay_tick >= 20)
+            {
+                enable = true;
+            }
+        }
+    }
+
+    pre_time_tick = time_tick;
+}
+
+// @brief 捕获到场同步头事件
+static inline void capture_head_evt_handler(uint32_t time_tick)
+{
+    uint32_t count, cycle_us;
+    
+    if (m_field_capture_cycle.is_capture_start)
+    {
+        m_field_capture_cycle.end_capture_time = time_tick;
+        
+        m_field_capture_cycle.is_capture_start = false;
+               
+        cycle_us = m_field_capture_cycle.end_capture_time - m_field_capture_cycle.start_capture_time;
+        
+
+        if (m_capture_fied_cycle_evt_handler != NULL)
+        {
+           m_capture_fied_cycle_evt_handler( check_field_cycle(TICK_TO_US(cycle_us)) );
+        }
+        
+    }
+    else
+    {
+        m_field_capture_cycle.start_capture_time = time_tick;
+    }
+}
+
 uint32_t g_cap_value[100] = {0};
 static uint16_t m_cap_index = 0;
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-		//uint32_t ic_val = 0;
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
 		{
-			//��ȡ������ֵ
-			//ic_val = htim->Instance->CCR4;
+            capture_sync_head(htim->Instance->CCR4, capture_head_evt_handler);
+            
             m_cap_index ++;
             if (m_cap_index >= 100)
             {
                 m_cap_index = 0;
             }
             g_cap_value[m_cap_index] = htim->Instance->CCR4;
-            
-			
 
-			//htim->Instance->CNT = 0;
 		}
 }
 
@@ -161,6 +293,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     static uint8_t tick = 0;
     
    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, tick++ & 1);
+    
 }
 
 /* USER CODE END 1 */

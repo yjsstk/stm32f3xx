@@ -6,6 +6,7 @@
  *  @date     2020/04/26
  */
 
+#include "config.h"
 #if (CONFIG_DEBUG_EN == 1)
 #define DEBUG_INFO_EN       1
 #define DEBUG_MODULE_NAME   "app_scheduler"
@@ -29,6 +30,33 @@ static app_scheduler_msg_t app_scheduler_msg[CONFIG_APP_SCHEDULER_EVENT+1];
 
 static uint16_t app_scheduler_write=0;
 static uint16_t app_scheduler_read=0;
+
+/** @brief   获取调度器中事件个数
+ *  @param   无
+ *  @return  无
+ */
+static uint16_t app_scheduler_get_event_numb(void) 
+{
+	uint16_t event_numb, read, write;
+	
+	read  = app_scheduler_read;
+	write = app_scheduler_write;
+	
+	if (write == read)
+	{
+		event_numb = 0;
+	}
+	else if (write > read)
+	{
+		event_numb = write - read;
+	}
+	else
+	{
+		event_numb = write + CONFIG_APP_SCHEDULER_EVENT - read + 1;
+	}
+	
+	return event_numb;
+}
 
 /** @brief   获取下一个索引值
  *  @param   index[in]：当前索引

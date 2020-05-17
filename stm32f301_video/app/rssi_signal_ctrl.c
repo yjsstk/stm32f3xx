@@ -20,6 +20,7 @@
 #include "pin30_ctrl.h"
 #include "pin12_ctrl.h"
 #include "app_scheduler.h"
+#include "adc_rssi.h"
 
 static bool     rssi_buff_lock  = false;         // 数据接收数组锁定
 static uint8_t  rssi_lost_time  = 0;             // 因锁定接收而错过的数据次数
@@ -61,6 +62,9 @@ static void rssi_signal_avg_calc(void)
 	rssi_status.rssi_top_avg = top_val / number;
 	rssi_status.rssi_bot_avg = bot_val / number;
 	
+	DEBUG_INFO("numb: %d, loss: %d, top_avg: %d, bot_avg: %d", 
+	            rssi_rx_number, rssi_lost_time, rssi_status.rssi_top_avg, rssi_status.rssi_bot_avg);
+	
 	if (rssi_status.rssi_top_min > top_val)
 	{
 		rssi_status.rssi_top_min = top_val;
@@ -89,6 +93,14 @@ static void rssi_video_sw_ctrl_deal(void)
 	else if (rssi_status.rssi_bot_avg >= RSSI_1V_VALUE) 
 	{
 		sw_sel = PIN12_SEL_VI2_BOT;
+	}
+	else if (rssi_status.rssi_top_avg == rssi_status.rssi_top_min)
+	{
+		sw_sel = PIN12_SEL_VI2_BOT;
+	}
+	else if (rssi_status.rssi_bot_avg == rssi_status.rssi_bot_min)
+	{
+		sw_sel = PIN12_SEL_VI1_TOP;
 	}
 	else if (rssi_status.rssi_top_avg > rssi_status.rssi_bot_avg) 
 	{
@@ -171,7 +183,7 @@ static void rssi_event_handle(void *parg, uint16_t arg_size)
  *  @param   rssi_bot[in] ：RSSI_BOT检测到的数据
  *  @return  无 
  */
-static void rssi_detect_callbacks(uint16_t rssi_top, uint16_t rssi_bot)
+static void rssi_detect_callbacks(uint16_t rssi_bot, uint16_t rssi_top)
 {
 	if (rssi_buff_lock == true)
 	{
@@ -201,6 +213,8 @@ CONFIG_RESULT_T rssi_signal_ctrl_init(void)
 {
 	rssi_status.rssi_top_min = UINT16_MAX;
 	rssi_status.rssi_bot_min = UINT16_MAX;
+	
+	adc_value_change_reg(rssi_detect_callbacks);
 	
 	return RESULT_SUCCESS;
 }

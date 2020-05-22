@@ -14,7 +14,7 @@
 #include "config.h"
 
 #define  PIN25_MS_COUNT      500    // MS计时值  
-#define  PIN25_COUNT_ERR     10     // MS计时误差
+#define  PIN25_COUNT_ERR     50     // MS计时误差
 
 /** @brief   中断回调函数
  *  @param   pcontent[in] 

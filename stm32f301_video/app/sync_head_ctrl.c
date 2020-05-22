@@ -251,10 +251,10 @@ static void sync_tim_detect_cb(filed_cycle_t filed_cycle)
 	{
 		sync_event_ctrl(SYNC_VIDEO_NTSC, SYNC_FIELD_EVEN);
 	}
-	if (filed_cycle != FILED_CYCLE_UNKNOWN)
-	{
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
-	}
+//	if (filed_cycle != FILED_CYCLE_UNKNOWN)
+//	{
+//		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+//	}
 }
 
 /** @brief   1MS回调函数

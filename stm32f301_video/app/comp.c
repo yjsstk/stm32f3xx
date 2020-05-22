@@ -34,7 +34,7 @@ void MX_COMP2_Init(void)
   hcomp2.Init.InvertingInput = COMP_INVERTINGINPUT_DAC1_CH1;
   hcomp2.Init.NonInvertingInput = COMP_NONINVERTINGINPUT_IO1;
   hcomp2.Init.Output = COMP_OUTPUT_NONE;
-  hcomp2.Init.OutputPol = COMP_OUTPUTPOL_NONINVERTED;
+  hcomp2.Init.OutputPol = COMP_OUTPUTPOL_INVERTED;//COMP_OUTPUTPOL_NONINVERTED;
   hcomp2.Init.BlankingSrce = COMP_BLANKINGSRCE_NONE;
   hcomp2.Init.TriggerMode = COMP_TRIGGERMODE_NONE;
   if (HAL_COMP_Init(&hcomp2) != HAL_OK)

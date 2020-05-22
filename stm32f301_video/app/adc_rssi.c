@@ -110,16 +110,16 @@ void adc_value_change_reg(padc_value_change_cb_t func)
  */
 static void adc_sample_1ms_cb(void *pcontent)
 {
-	static uint8_t sample_time_ctrl=0;
+//	static uint8_t sample_time_ctrl=0;
 	
-	if (sample_time_ctrl++ >= 5)
-	{
-		sample_time_ctrl = 0;
+//	if (sample_time_ctrl++ >= 5)
+//	{
+//		sample_time_ctrl = 0;
 		HAL_ADC_Start_DMA(&AdcHandle,
 						  (uint32_t *)adc_dma_buff,
 						   ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN
 						   );
-	}
+//	}
 }
 
 /** @brief   该模块的应用初始化函数 
@@ -148,13 +148,13 @@ CONFIG_RESULT_T adc_init(void)
 		return RESULT_ERROR;
 	}
 
-	AdcHandle.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV1;      /* Synchronous clock mode, input ADC clock divided by 2*/
+	AdcHandle.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV4;      /* Synchronous clock mode, input ADC clock divided by 2*/
 	AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;            /* 12-bit resolution for converted data */
 	AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;           /* Right-alignment for converted data */
 	AdcHandle.Init.ScanConvMode          = ENABLE;                       /* Sequencer disabled (ADC conversion on only 1 channel: channel set on rank 1) */
 	AdcHandle.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;           /* EOC flag picked-up to indicate conversion end */
 	AdcHandle.Init.LowPowerAutoWait      = DISABLE;                       /* Auto-delayed conversion feature disabled */
-	AdcHandle.Init.ContinuousConvMode    = DISABLE;                        /* Continuous mode enabled (automatic conversion restart after each conversion) */
+	AdcHandle.Init.ContinuousConvMode    = ENABLE;                        /* Continuous mode enabled (automatic conversion restart after each conversion) */
 	AdcHandle.Init.NbrOfConversion       = ADC_CHANNEL_NUMB;             /* Parameter discarded because sequencer is disabled */
 	AdcHandle.Init.DiscontinuousConvMode = ENABLE;                       /* Parameter discarded because sequencer is disabled */
 	AdcHandle.Init.NbrOfDiscConversion   = 1;                             /* Parameter discarded because sequencer is disabled */
@@ -202,7 +202,7 @@ CONFIG_RESULT_T adc_init(void)
 	/* ### - 3 - Channel configuration ######################################## */
 	sConfig.Channel      = ADC_CHANNEL_1;                /* Sampled channel number */
 	sConfig.Rank         = ADC_REGULAR_RANK_1;          /* Rank of sampled channel number ADCx_CHANNEL */
-	sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;   /* Sampling time (number of clock cycles unit) */
+	sConfig.SamplingTime = ADC_SAMPLETIME_601CYCLES_5;   /* Sampling time (number of clock cycles unit) */
 	sConfig.SingleDiff   = ADC_SINGLE_ENDED;            /* Single-ended input channel */
 	sConfig.OffsetNumber = ADC_OFFSET_NONE;             /* No offset subtraction */ 
 	sConfig.Offset = 0;                                 /* Parameter discarded because offset correction is disabled */

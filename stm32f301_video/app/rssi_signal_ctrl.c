@@ -21,6 +21,8 @@
 #include "pin12_ctrl.h"
 #include "app_scheduler.h"
 #include "adc_rssi.h"
+#include "dac.h"
+#include "pin22_ctrl.h"
 
 static bool     rssi_buff_lock  = false;         // 数据接收数组锁定
 static uint8_t  rssi_lost_time  = 0;             // 因锁定接收而错过的数据次数
@@ -89,10 +91,14 @@ static void rssi_video_sw_ctrl_deal(void)
 	if (rssi_status.rssi_top_avg >= RSSI_1V_VALUE) 
 	{
 		sw_sel = PIN12_SEL_VI1_TOP;
+		pin22_output_ctrl(GPIO_PIN_RESET);
+		HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1005);
 	}
 	else if (rssi_status.rssi_bot_avg >= RSSI_1V_VALUE) 
 	{
 		sw_sel = PIN12_SEL_VI2_BOT;
+		pin22_output_ctrl(GPIO_PIN_RESET);
+		HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1005);
 	}
 	else
 	{
@@ -110,6 +116,8 @@ static void rssi_video_sw_ctrl_deal(void)
 		{
 			sw_sel = PIN12_SEL_VI2_BOT;
 		}
+		pin22_output_ctrl(GPIO_PIN_SET);
+		HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 0);
 	}
 	
 	if (sw_sel != rssi_pin12_status)

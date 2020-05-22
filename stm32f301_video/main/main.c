@@ -94,6 +94,11 @@ void systic_test(void *pcontent)
 		uint32_t test = main_run_count / 1000;
 		app_scheduler_put(scheduler_test, &test, sizeof(test));
 	}
+	
+	if ((main_run_count % 500) == 0)
+	{
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+	}
 }
 
 /**
@@ -132,7 +137,7 @@ int main(void)
 	pin27_ctrl_init();
 	pin22_ctrl_init();
 	rssi_signal_ctrl_init();
-	sync_head_ctrl_init();
+//	sync_head_ctrl_init();
 	pwm_ctrl_init();
 	adc_init();
     

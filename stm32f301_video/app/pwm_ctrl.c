@@ -132,23 +132,30 @@ void pwm_gpio_init(void)
 
 	/* Enable all GPIO Channels Clock requested */
 	__HAL_RCC_GPIOA_CLK_ENABLE();
-
+	
 	/* Common configuration for all channels */
-	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_11;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-
-	GPIO_InitStruct.Alternate = GPIO_AF6_TIM1;
-	GPIO_InitStruct.Pin = GPIO_PIN_8;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	GPIO_InitStruct.Alternate = GPIO_AF6_TIM1;
-	GPIO_InitStruct.Pin = GPIO_PIN_9;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//	/* Common configuration for all channels */
+//	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+//	GPIO_InitStruct.Pull = GPIO_PULLUP;
+//	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 
-	GPIO_InitStruct.Alternate = GPIO_AF11_TIM1;
-	GPIO_InitStruct.Pin = GPIO_PIN_11;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//	GPIO_InitStruct.Alternate = GPIO_AF6_TIM1;
+//	GPIO_InitStruct.Pin = GPIO_PIN_8;
+//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+//	GPIO_InitStruct.Alternate = GPIO_AF6_TIM1;
+//	GPIO_InitStruct.Pin = GPIO_PIN_9;
+//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+//	GPIO_InitStruct.Alternate = GPIO_AF11_TIM1;
+//	GPIO_InitStruct.Pin = GPIO_PIN_11;
+//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 }
 
 /** @brief   该模块的应用初始化函数 
@@ -159,6 +166,9 @@ void pwm_gpio_init(void)
 CONFIG_RESULT_T pwm_ctrl_init(void)
 {
 	pwm_gpio_init();
+	
+	return RESULT_SUCCESS;
+	
 	
 	HAL_NVIC_SetPriority(TIM1_UP_TIM16_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(TIM1_UP_TIM16_IRQn);
@@ -186,19 +196,6 @@ CONFIG_RESULT_T pwm_ctrl_init(void)
 	}
 	
 	HAL_TIM_Base_Start_IT(&TimHandle);
-
-//	TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
-//	sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_ENABLE;
-//	sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_ENABLE;
-//	sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-//	sBreakDeadTimeConfig.DeadTime = 0xFF;
-//	sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-//	sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-//	sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_ENABLE;
-//	if (HAL_TIMEx_ConfigBreakDeadTime(&TimHandle, &sBreakDeadTimeConfig) != HAL_OK)
-//	{
-//		return RESULT_ERROR;
-//	}
   
 	/*##-2- Configure the PWM channels #########################################*/
 	/* Common configuration for all channels */

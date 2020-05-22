@@ -58,12 +58,12 @@ void pin25_exti15_interrupt_handler(void *pcontent)
 	}
 	else 
 	{
-		DEBUG_INFO("GPIO_PIN_25 is set");
 		if ((pin25_ms_count >= PIN25_MS_COUNT - PIN25_COUNT_ERR) 
 		 || (pin25_ms_count <= PIN25_MS_COUNT + PIN25_COUNT_ERR))
 		{
 			if (rssi_get_is_both_weak() == true)
 			{
+				DEBUG_INFO("GPIO_PIN_25 is set");
 				pin25_ctrl_output = 0;
 				pin24_output_ctrl(GPIO_PIN_SET);
 			}

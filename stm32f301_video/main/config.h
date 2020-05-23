@@ -15,8 +15,8 @@
 #define CONFIG_APP_SCHEDULER_EVENT        20 
 #define CONFIG_APP_SCHEDULER_EVENT_SIZE   20 
 
-#define CONFIG_DEBUG_EN              1          // DEBUG调试
-#define CONFIG_WATCHDOG_EN           0          // 看门狗功能
+#define CONFIG_DEBUG_EN              0          // DEBUG调试
+#define CONFIG_WATCHDOG_EN           1          // 看门狗功能
  
 typedef enum
 {

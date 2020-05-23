@@ -95,10 +95,10 @@ void systic_test(void *pcontent)
 		app_scheduler_put(scheduler_test, &test, sizeof(test));
 	}
 	
-	if ((main_run_count % 500) == 0)
-	{
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
-	}
+//	if ((main_run_count % 500) == 0)
+//	{
+//		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+//	}
 }
 
 /**

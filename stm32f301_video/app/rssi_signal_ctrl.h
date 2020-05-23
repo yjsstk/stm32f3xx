@@ -13,8 +13,10 @@
 #include "config.h"
 #include <stdbool.h>
 
-#define RSSI_BUFFER_LEN     2        // MAX 255
-#define RSSI_1V_VALUE       1117     // 0.9V对应的值
+#define RSSI_BUFFER_LEN              2        // MAX 255
+#define RSSI_TOP_ADC_VALUE           1110     // 0.9V对应的值
+#define RSSI_BOT_ADC_VALUE           1110     // 0.9V对应的值
+#define RSSI_VIDEO_DELAY_SWITCH_MS   1000     // 视频延时切换时间(MS) max: 0xFFFF
 
 /** @brief   获取RSSI信号判断状态
  *  @param   无 

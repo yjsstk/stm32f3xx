@@ -11,7 +11,7 @@
 
 #include "config.h"
 
-#define SYSTICK_MAX_FUNC_REG   3
+#define SYSTICK_MAX_FUNC_REG   8
 
 typedef void (*psystick_1ms_cb_t)(void *pcontent);
 

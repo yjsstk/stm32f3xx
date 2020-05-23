@@ -26,21 +26,16 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* USER CODE BEGIN Includes */
+#define DAC_OUTPUT_VCC        0.55                   // DAC输出电压，单位V
+#define DAC_VCC_TO_VAL(VCC)  ((VCC) * 4096 / 3.3)    // 设定电压值转为DAC的输出值
 
-/* USER CODE END Includes */
-
-extern DAC_HandleTypeDef hdac;
-
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
-
+/** @brief   设置DAC输出电压值
+ *  @param   vcc[in]: 输出的电压值, MAX: 3.3
+ *  @return  无
+ */
+extern inline void dac_set_output_vcc(float vcc);
+	
 void MX_DAC_Init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }

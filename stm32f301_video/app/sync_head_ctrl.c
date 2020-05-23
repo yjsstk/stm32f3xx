@@ -278,7 +278,7 @@ static void sync_1ms_callback(void *pcontent)
 	{
 		psync_ctrl->stop_output = true;
 		pwm_pin18_pin19_stop();
-		pin22_output_ctrl(GPIO_PIN_SET);
+//		pin22_output_ctrl(GPIO_PIN_SET);
 	}
 }
  

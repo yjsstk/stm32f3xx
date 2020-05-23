@@ -26,6 +26,15 @@
 
 DAC_HandleTypeDef hdac;
 
+/** @brief   设置DAC输出电压值
+ *  @param   vcc[in]: 输出的电压值, MAX: 3.3
+ *  @return  无
+ */
+inline void dac_set_output_vcc(float vcc)
+{
+	HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, DAC_VCC_TO_VAL(vcc));
+}
+
 /* DAC init function */
 void MX_DAC_Init(void)
 {
@@ -47,7 +56,7 @@ void MX_DAC_Init(void)
     Error_Handler();
   }
   
-  HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1005);
+   HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1005);
    HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 
 }

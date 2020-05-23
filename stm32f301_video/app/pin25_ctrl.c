@@ -36,11 +36,10 @@ static void pin25_1ms_callback(void *pcontent)
 	if (pin25_ctrl_output < UINT16_MAX)
 	{
 		pin25_ctrl_output++;
-	}
-	
-	if (pin25_ctrl_output == PIN25_MS_COUNT)
-	{
-		pin24_output_ctrl(GPIO_PIN_RESET);
+		if (pin25_ctrl_output == PIN25_MS_COUNT)
+		{
+			pin24_output_ctrl(GPIO_PIN_RESET);
+		}
 	}
 }
 
@@ -59,7 +58,7 @@ void pin25_exti15_interrupt_handler(void *pcontent)
 	else 
 	{
 		if ((pin25_ms_count >= PIN25_MS_COUNT - PIN25_COUNT_ERR) 
-		 || (pin25_ms_count <= PIN25_MS_COUNT + PIN25_COUNT_ERR))
+		 && (pin25_ms_count <= PIN25_MS_COUNT + PIN25_COUNT_ERR))
 		{
 			if (rssi_get_is_both_weak() == true)
 			{

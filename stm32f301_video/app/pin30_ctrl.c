@@ -9,6 +9,13 @@
  *  @note     软件控制由PIN12控制
  */
 
+#include "config.h"
+#if (CONFIG_DEBUG_EN == 1)
+#define DEBUG_INFO_EN       1
+#define DEBUG_MODULE_NAME   "PIN30"
+#endif
+#include "debug.h"
+
 #include "pin30_ctrl.h"
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_hal_gpio.h"
@@ -23,10 +30,12 @@ void pin30_set_video_ctrl(PIN30_VIDEO_CTRL_T ctrl)
 {
 	if (ctrl == PIN30_VIDEO_CTRL_BY_HW)
 	{
+		DEBUG_INFO("PIN30_VIDEO_CTRL_BY_HW");
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
 	}
 	else if (ctrl == PIN30_VIDEO_CTRL_BY_SW)
 	{
+		DEBUG_INFO("PIN30_VIDEO_CTRL_BY_SW");
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
 	}
 }

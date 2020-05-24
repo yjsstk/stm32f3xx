@@ -265,7 +265,7 @@ static void sync_tim_detect_cb(filed_cycle_t filed_cycle)
 static void sync_1ms_callback(void *pcontent)
 {
 	psync_ctrl->keep_output_ms++;
-	if (rssi_get_is_both_weak() == false)
+	if (rssi_get_is_both_weak(RSSI_MAX_LIMIT_VCC) == false)
 	{
 		psync_ctrl->stop_output = false;
 		psync_ctrl->keep_output_ms = 0;

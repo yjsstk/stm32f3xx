@@ -33,7 +33,7 @@ CONFIG_RESULT_T pin22_ctrl_init(void)
 	GPIO_InitStruct.Pull  = GPIO_PULLUP;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct); 
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct); 
 	
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
 	

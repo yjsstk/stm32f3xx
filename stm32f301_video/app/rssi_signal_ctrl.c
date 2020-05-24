@@ -23,14 +23,16 @@
 #include "adc_rssi.h"
 #include "dac.h"
 #include "pin22_ctrl.h"
+#include "pin25_ctrl.h"
 #include "systick.h"
 
-static bool     rssi_both_weak  = false;         // 两个RSSI信号都小于0.9V
 static uint8_t  rssi_buff_in    = 0;             // 数据存入数组索引号
 static uint8_t  rssi_rx_number  = 0;             // 当前数组中的数据个 
 static uint16_t rssi_switch_time_cnt = 0;        // 视频切换计时
 static uint16_t rssi_top_buff[RSSI_BUFFER_LEN];  // RSSI_TOP检测到的数据
 static uint16_t rssi_bot_buff[RSSI_BUFFER_LEN];  // RSSI_BOT检测到的数据
+
+static uint8_t  rssi_ctrl_by_sw_state = 0xFF;       
 
 PIN30_VIDEO_CTRL_T rssi_pin30_cur_status  = PIN30_VIDEO_CTRL_UNKNOWN;
 PIN30_VIDEO_CTRL_T rssi_pin30_next_status = PIN30_VIDEO_CTRL_UNKNOWN;
@@ -52,6 +54,32 @@ typedef struct
 
 static volatile rssi_status_t rssi_status;
 
+/** @brief   PIN22延时控制
+ *  @param   无 
+ *  @return  无
+ *  @note    
+ */
+static void rssi_pin22_delay_ctrl(void)
+{
+	PIN12_VIDEO_SEL_T sw_sel = rssi_pin12_cur_status;
+	
+	uint16_t top_standard_adc = rssi_status.rssi_top_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
+	uint16_t bot_standard_adc = rssi_status.rssi_bot_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
+	if (rssi_status.rssi_top_avg >= top_standard_adc) 
+	{
+		pin22_output_ctrl(GPIO_PIN_RESET);
+	}
+	else if (rssi_status.rssi_bot_avg >= bot_standard_adc) 
+	{
+		pin22_output_ctrl(GPIO_PIN_RESET);
+	}
+	else
+	{
+		pin22_output_ctrl(GPIO_PIN_SET);
+	}
+}
+
+
 /** @brief   视频软件选择控制处理
  *  @param   无 
  *  @return  无
@@ -61,14 +89,16 @@ static void rssi_video_sw_ctrl_deal(void)
 {
 	PIN12_VIDEO_SEL_T sw_sel = rssi_pin12_cur_status;
 	
-	if (rssi_status.rssi_top_avg >= RSSI_TOP_ADC_VALUE) 
+	uint16_t top_standard_adc = rssi_status.rssi_top_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
+	uint16_t bot_standard_adc = rssi_status.rssi_bot_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
+	if (rssi_status.rssi_top_avg >= top_standard_adc) 
 	{
 		sw_sel = PIN12_SEL_VI1_TOP;
 		
 		pin22_output_ctrl(GPIO_PIN_RESET);
 		dac_set_output_vcc(DAC_OUTPUT_VCC);
 	}
-	else if (rssi_status.rssi_bot_avg >= RSSI_BOT_ADC_VALUE) 
+	else if (rssi_status.rssi_bot_avg >= bot_standard_adc) 
 	{
 		sw_sel = PIN12_SEL_VI2_BOT;
 		
@@ -77,23 +107,29 @@ static void rssi_video_sw_ctrl_deal(void)
 	}
 	else
 	{
-		uint16_t top_val = rssi_status.rssi_top_avg - rssi_status.rssi_top_min;
-		uint16_t bot_val = rssi_status.rssi_bot_avg - rssi_status.rssi_bot_min;
-		
-//		DEBUG_INFO("top_vag: %d, top_min: %d",rssi_status.rssi_top_avg, rssi_status.rssi_top_min);
-//		DEBUG_INFO("bot_val: %d, bot_min: %d",rssi_status.rssi_bot_avg, rssi_status.rssi_bot_min);
-//		DEBUG_INFO("top_val: %d, bot_val: %d", top_val, bot_val);
-		if (top_val > bot_val)
-		{
-			sw_sel = PIN12_SEL_VI1_TOP;
-		}
-		else if (top_val < bot_val)
+		pin22_output_ctrl(GPIO_PIN_SET);
+		dac_set_output_vcc(0);
+		if (rssi_status.rssi_top_avg <= rssi_status.rssi_top_min)
 		{
 			sw_sel = PIN12_SEL_VI2_BOT;
 		}
-		
-		pin22_output_ctrl(GPIO_PIN_SET);
-		dac_set_output_vcc(0);
+		else if (rssi_status.rssi_bot_avg <= rssi_status.rssi_bot_min)
+		{
+			sw_sel = PIN12_SEL_VI1_TOP;
+		}
+		else
+		{
+			uint16_t top_val = rssi_status.rssi_top_avg - rssi_status.rssi_top_min;
+			uint16_t bot_val = rssi_status.rssi_bot_avg - rssi_status.rssi_bot_min;
+			if (top_val > bot_val)
+			{
+				sw_sel = PIN12_SEL_VI1_TOP;
+			}
+			else if (top_val < bot_val)
+			{
+				sw_sel = PIN12_SEL_VI2_BOT;
+			}
+		}
 	}
 	
 	if (sw_sel != rssi_pin12_cur_status)
@@ -105,14 +141,69 @@ static void rssi_video_sw_ctrl_deal(void)
 	}
 }
 
-/** @brief   获取RSSI信号判断状态
+/** @brief   是否须要进行软件切换判断
  *  @param   无 
- *  @return  true  ：两路RSSI信号都低于RSSI_1V_VALUE
- *  @return  false ：至少有一路RSSI信号高于RSSI_1V_VALUE
+ *  @return  
+ *  @note    
  */
-bool rssi_get_is_both_weak(void)
+static uint8_t rssi_video_sw_switch_detect(void)
+{	
+	uint8_t sw_sitch=0xFF;
+	
+	uint16_t top_standard_adc = rssi_status.rssi_top_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
+	uint16_t bot_standard_adc = rssi_status.rssi_bot_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
+	if (rssi_status.rssi_top_avg >= top_standard_adc) 
+	{
+		sw_sitch = 1;
+	}
+	else if (rssi_status.rssi_bot_avg >= bot_standard_adc) 
+	{
+		sw_sitch = 2;
+	}
+	else
+	{
+		if (rssi_status.rssi_top_avg <= rssi_status.rssi_top_min)
+		{
+			sw_sitch = 3;
+		}
+		else if (rssi_status.rssi_bot_avg <= rssi_status.rssi_bot_min)
+		{
+			sw_sitch = 4;
+		}
+		else
+		{
+			uint16_t top_val = rssi_status.rssi_top_avg - rssi_status.rssi_top_min;
+			uint16_t bot_val = rssi_status.rssi_bot_avg - rssi_status.rssi_bot_min;
+			if (top_val > bot_val)
+			{
+				sw_sitch = 5;
+			}
+			else if (top_val < bot_val)
+			{
+				sw_sitch = 6;
+			}
+		}
+	}
+	
+	return sw_sitch;
+}
+
+/** @brief   判断两路RSSI是否都小于指定的VCC值
+ *  @param   VCC[in] : 判断值
+ *  @return  true  ：两路RSSI信号都低于VCC
+ *  @return  false ：至少有一路RSSI信号高于VCC
+ */
+bool rssi_get_is_both_weak(float VCC)
 {
-	return rssi_both_weak;
+	if ((rssi_status.rssi_top_avg >= RSSI_VCC_TO_ADC(VCC)) ||
+		(rssi_status.rssi_bot_avg >= RSSI_VCC_TO_ADC(VCC)))
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 /** @brief   RSSI信号处理
@@ -146,25 +237,11 @@ static void rssi_scheduler_event_handle(void *parg, uint16_t arg_size)
 	rssi_status.rssi_top_avg = top_val / rssi_rx_number;
 	rssi_status.rssi_bot_avg = bot_val / rssi_rx_number;
 	
-//	DEBUG_INFO("numb: %d, top_avg: %d, bot_avg: %d", 
-//	            rssi_rx_number, rssi_status.rssi_top_avg, rssi_status.rssi_bot_avg);
-	
-	// 记录最小值
-	if (rssi_status.rssi_top_min > rssi_status.rssi_top_avg)
-	{
-		rssi_status.rssi_top_min = rssi_status.rssi_top_avg;
-		DEBUG_INFO("rssi_top_min: %d", rssi_status.rssi_top_avg);
-	}
-	// 记录最小值
-	if (rssi_status.rssi_bot_min > rssi_status.rssi_bot_avg)
-	{
-		rssi_status.rssi_bot_min = rssi_status.rssi_bot_avg;
-		DEBUG_INFO("rssi_bot_min: %d", rssi_status.rssi_bot_avg);
-	}
-	
 	// 控制状态
-	if ((rssi_status.rssi_top_avg >= RSSI_TOP_ADC_VALUE) 
-	 && (rssi_status.rssi_bot_avg >= RSSI_BOT_ADC_VALUE))
+	uint16_t top_standard_adc = rssi_status.rssi_top_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
+	uint16_t bot_standard_adc = rssi_status.rssi_bot_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
+	if ((rssi_status.rssi_top_avg >= top_standard_adc) 
+	 && (rssi_status.rssi_bot_avg >= bot_standard_adc))
 	{
 		rssi_pin30_next_status = PIN30_VIDEO_CTRL_BY_HW;
 		DEBUG_INFO("next_status: HW");
@@ -189,6 +266,16 @@ static void rssi_detect_callbacks(uint16_t rssi_bot, uint16_t rssi_top)
 	app_scheduler_put(rssi_scheduler_event_handle, (void *)&msg, sizeof(msg));
 }
 
+/** @brief   RSSI信号校准通知回调函数
+ *  @param   无
+ *  @return  无 
+ */
+static void rssi_calibration_notify_cb(void)
+{	
+	rssi_status.rssi_top_min = rssi_status.rssi_top_avg;
+	rssi_status.rssi_bot_min = rssi_status.rssi_bot_avg;
+}
+
 /** @brief   1ms回调函数
  *  @param   无 
  *  @return  
@@ -196,36 +283,46 @@ static void rssi_detect_callbacks(uint16_t rssi_bot, uint16_t rssi_top)
 static void rssi_time_1ms_cb(void *pcontent)
 {
 	rssi_switch_time_cnt++;
-	if (rssi_pin30_cur_status == rssi_pin30_next_status)
+	if (PIN30_VIDEO_CTRL_BY_HW == rssi_pin30_next_status)
 	{
-		rssi_switch_time_cnt = 0;
-	}
-	else if (rssi_switch_time_cnt >= RSSI_VIDEO_DELAY_SWITCH_MS)
-	{
-		rssi_pin30_cur_status = rssi_pin30_next_status;
-		if (rssi_pin30_next_status == PIN30_VIDEO_CTRL_BY_HW)
-		{
-			DEBUG_INFO("video switch by hw");
-			dac_set_output_vcc(DAC_OUTPUT_VCC);
-			pin30_set_video_ctrl(PIN30_VIDEO_CTRL_BY_HW);
-			pin12_set_video_ctrl(PIN12_SEL_VI1_TOP);
-			pin22_output_ctrl(GPIO_PIN_RESET);
-		}
-		else if (rssi_pin30_next_status == PIN30_VIDEO_CTRL_BY_SW)
-		{
-			DEBUG_INFO("video switch by sw");
-			pin30_set_video_ctrl(PIN30_VIDEO_CTRL_BY_SW);
-			rssi_video_sw_ctrl_deal();
-		}
-		
-		if ((rssi_status.rssi_top_avg >= RSSI_TOP_ADC_VALUE) 
-		 || (rssi_status.rssi_bot_avg >= RSSI_BOT_ADC_VALUE))
-		{
-			rssi_both_weak = false;
+		if (rssi_pin30_cur_status != rssi_pin30_next_status)
+		{			
+//			if (rssi_switch_time_cnt >= RSSI_VIDEO_DELAY_SWITCH_MS)
+			{
+				rssi_pin30_cur_status = PIN30_VIDEO_CTRL_BY_HW;
+				DEBUG_INFO("video switch by hw");
+				dac_set_output_vcc(DAC_OUTPUT_VCC);
+				pin30_set_video_ctrl(PIN30_VIDEO_CTRL_BY_HW);
+				pin12_set_video_ctrl(PIN12_SEL_VI1_TOP);
+				pin22_output_ctrl(GPIO_PIN_RESET);
+				rssi_ctrl_by_sw_state = 0xff;
+			}
 		}
 		else
 		{
-			rssi_both_weak = true;
+			rssi_switch_time_cnt = 0;
+		}
+	}
+	else if (rssi_pin30_next_status == PIN30_VIDEO_CTRL_BY_SW)
+	{
+		uint8_t sw_temp = rssi_video_sw_switch_detect();
+		if (sw_temp != rssi_ctrl_by_sw_state)
+		{
+			if (rssi_pin30_cur_status != PIN30_VIDEO_CTRL_BY_SW)
+			{
+				rssi_pin30_cur_status = PIN30_VIDEO_CTRL_BY_SW;
+				pin30_set_video_ctrl(PIN30_VIDEO_CTRL_BY_SW);
+			}
+			rssi_video_sw_ctrl_deal();
+			if (rssi_switch_time_cnt >= RSSI_VIDEO_DELAY_SWITCH_MS)
+			{
+				rssi_pin22_delay_ctrl();
+				rssi_ctrl_by_sw_state = sw_temp;
+			}
+		}
+		else
+		{
+			rssi_switch_time_cnt = 0;
 		}
 	}
 }
@@ -237,11 +334,13 @@ static void rssi_time_1ms_cb(void *pcontent)
  */
 CONFIG_RESULT_T rssi_signal_ctrl_init(void)
 {
-	rssi_status.rssi_top_min = UINT16_MAX;
-	rssi_status.rssi_bot_min = UINT16_MAX;
+	rssi_status.rssi_top_min = RSSI_VCC_TO_ADC(RSSI_DEFAULT_VCC);
+	rssi_status.rssi_bot_min = RSSI_VCC_TO_ADC(RSSI_DEFAULT_VCC);
+	rssi_ctrl_by_sw_state = 0xFF; 
 	
 	systick_1ms_cb_reg(rssi_time_1ms_cb);
 	adc_value_change_reg(rssi_detect_callbacks);
+	pin25_calibration_cb_reg(rssi_calibration_notify_cb);
 	
 	return RESULT_SUCCESS;
 }

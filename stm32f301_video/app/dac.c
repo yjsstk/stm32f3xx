@@ -56,7 +56,7 @@ void MX_DAC_Init(void)
     Error_Handler();
   }
   
-   HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 1005);
+   HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, DAC_VCC_TO_VAL(DAC_OUTPUT_VCC));
    HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 
 }

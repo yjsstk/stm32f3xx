@@ -10,7 +10,7 @@
 
 #include "config.h"
 #if (CONFIG_DEBUG_EN == 1)
-#define DEBUG_INFO_EN       1
+#define DEBUG_INFO_EN       0
 #define DEBUG_MODULE_NAME   "PIN25"
 #endif
 #include "debug.h"
@@ -23,6 +23,18 @@
 
 static volatile uint16_t pin25_ms_count    = 0;
 static volatile uint16_t pin25_ctrl_output = 0;
+
+ppin25_calibration_cb_t pin25_calibration_cb=NULL;
+
+/** @brief   校准通知回调函数注册
+ *  @param   func[in] 回调函数
+ *  @return  无
+ *  @note    
+ */
+void pin25_calibration_cb_reg(ppin25_calibration_cb_t func)
+{
+	pin25_calibration_cb = func;
+}
 
 /** @brief   1MS回调函数
  *  @param   pcontent[in] 
@@ -60,11 +72,15 @@ void pin25_exti15_interrupt_handler(void *pcontent)
 		if ((pin25_ms_count >= PIN25_MS_COUNT - PIN25_COUNT_ERR) 
 		 && (pin25_ms_count <= PIN25_MS_COUNT + PIN25_COUNT_ERR))
 		{
-			if (rssi_get_is_both_weak() == true)
+			if (rssi_get_is_both_weak(RSSI_MAX_LIMIT_VCC) == true)
 			{
 				DEBUG_INFO("GPIO_PIN_25 is set");
 				pin25_ctrl_output = 0;
 				pin24_output_ctrl(GPIO_PIN_SET);
+				if (pin25_calibration_cb != NULL)
+				{
+					pin25_calibration_cb();
+				}
 			}
 		}
 	}

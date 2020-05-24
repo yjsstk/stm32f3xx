@@ -14,16 +14,20 @@
 #include <stdbool.h>
 
 #define RSSI_BUFFER_LEN              2        // MAX 255
-#define RSSI_TOP_ADC_VALUE           1110     // 0.9V对应的值
-#define RSSI_BOT_ADC_VALUE           1110     // 0.9V对应的值
 #define RSSI_VIDEO_DELAY_SWITCH_MS   1000     // 视频延时切换时间(MS) max: 0xFFFF
+#define RSSI_MAX_LIMIT_VCC           0.9      // 设定RSSI最大限定电压，单位V, MAX: 3.3v
+#define RSSI_DEFAULT_VCC             0.65     // 设定RSSI默认电压，单位V, MAX: 3.3v
+#define RSSI_NORMAL_UP_VCC           0.2      // 比校准值高出的电压。单位V
+
+#define RSSI_VCC_TO_ADC(VCC)         ((VCC) * 4096 / 3.3)
+
 
 /** @brief   获取RSSI信号判断状态
  *  @param   无 
  *  @return  true  ：两路RSSI信号都低于RSSI_1V_VALUE
  *  @return  false ：至少有一路RSSI信号高于RSSI_1V_VALUE
  */
-extern bool rssi_get_is_both_weak(void);
+extern bool rssi_get_is_both_weak(float VCC);
 
 /** @brief   该模块的应用初始化函数 
  *  @param   无 

@@ -112,7 +112,7 @@ static void adc_sample_1ms_cb(void *pcontent)
 {
 	static uint8_t sample_time_ctrl=0;
 	
-	if (sample_time_ctrl++ >= 10)
+	if (sample_time_ctrl++ >= 2)
 	{
 		sample_time_ctrl = 0;
 		HAL_ADC_Start_DMA(&AdcHandle,

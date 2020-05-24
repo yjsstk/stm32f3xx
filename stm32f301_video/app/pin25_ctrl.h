@@ -16,6 +16,15 @@
 #define  PIN25_MS_COUNT      500    // MS计时值  
 #define  PIN25_COUNT_ERR     20     // MS计时误差
 
+typedef void (*ppin25_calibration_cb_t)(void);
+
+/** @brief   校准通知回调函数注册
+ *  @param   func[in] 回调函数
+ *  @return  无
+ *  @note    
+ */
+extern void pin25_calibration_cb_reg(ppin25_calibration_cb_t func);
+ 
 /** @brief   中断回调函数
  *  @param   pcontent[in] 
  *  @return  无

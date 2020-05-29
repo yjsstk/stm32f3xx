@@ -313,6 +313,7 @@ static void rssi_time_1ms_cb(void *pcontent)
 				rssi_pin30_cur_status = PIN30_VIDEO_CTRL_BY_SW;
 				pin30_set_video_ctrl(PIN30_VIDEO_CTRL_BY_SW);
 			}
+			rssi_ctrl_by_sw_state = 0xff;
 			rssi_video_sw_ctrl_deal();
 			if (rssi_switch_time_cnt >= RSSI_VIDEO_DELAY_SWITCH_MS)
 			{

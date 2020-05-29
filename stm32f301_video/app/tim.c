@@ -26,6 +26,8 @@
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim2;
+DMA_HandleTypeDef hdma_tim2_ch2_ch4;
+DMA_HandleTypeDef hdma_tim2_ch3;
 
 /* TIM2 init function */
 void MX_TIM2_Init(void)
@@ -59,6 +61,14 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV2;
+  sConfigIC.ICFilter = 0;
+  if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
   sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
@@ -69,7 +79,8 @@ void MX_TIM2_Init(void)
   }
   
   HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_4);
-  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4);
+  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_3);
+  //HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4);
   HAL_TIM_Base_Start_IT(&htim2);
 
 }
@@ -81,7 +92,8 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
   if(tim_baseHandle->Instance==TIM2)
   {
   /* USER CODE BEGIN TIM2_MspInit 0 */
-
+    volatile uint32_t pa8_low = (1 << 24);
+    volatile uint32_t pa8_high = (1 << 8);
   /* USER CODE END TIM2_MspInit 0 */
     /* TIM2 clock enable */
     __HAL_RCC_TIM2_CLK_ENABLE();
@@ -99,6 +111,45 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    /* TIM2 DMA Init */
+    /* TIM2_CH2_CH4 Init */
+    hdma_tim2_ch2_ch4.Instance = DMA1_Channel7;
+    hdma_tim2_ch2_ch4.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_tim2_ch2_ch4.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_tim2_ch2_ch4.Init.MemInc = DMA_MINC_DISABLE;
+    hdma_tim2_ch2_ch4.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_tim2_ch2_ch4.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_tim2_ch2_ch4.Init.Mode = DMA_CIRCULAR;
+    hdma_tim2_ch2_ch4.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    hdma_tim2_ch2_ch4.Instance->CPAR =(uint32_t)&pa8_low;
+    hdma_tim2_ch2_ch4.Instance->CMAR = (uint32_t)&GPIOA->BSRR;
+    if (HAL_DMA_Init(&hdma_tim2_ch2_ch4) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* Several peripheral DMA handle pointers point to the same DMA handle.
+     Be aware that there is only one channel to perform all the requested DMAs. */
+    __HAL_LINKDMA(tim_baseHandle,hdma[TIM_DMA_ID_CC2],hdma_tim2_ch2_ch4);
+    __HAL_LINKDMA(tim_baseHandle,hdma[TIM_DMA_ID_CC4],hdma_tim2_ch2_ch4);
+
+    /* TIM2_CH3 Init */
+    hdma_tim2_ch3.Instance = DMA1_Channel1;
+    hdma_tim2_ch3.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    hdma_tim2_ch3.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_tim2_ch3.Init.MemInc = DMA_MINC_DISABLE;
+    hdma_tim2_ch3.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_tim2_ch3.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_tim2_ch3.Init.Mode = DMA_CIRCULAR;
+    hdma_tim2_ch3.Init.Priority = DMA_PRIORITY_VERY_HIGH;
+    hdma_tim2_ch3.Instance->CPAR =(uint32_t)&pa8_low;
+    hdma_tim2_ch3.Instance->CMAR = (uint32_t)&GPIOA->BSRR;
+    if (HAL_DMA_Init(&hdma_tim2_ch3) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(tim_baseHandle,hdma[TIM_DMA_ID_CC3],hdma_tim2_ch3);
 
     /* TIM2 interrupt Init */
     HAL_NVIC_SetPriority(TIM2_IRQn, 1, 0);
@@ -125,6 +176,10 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_3);
 
+    /* TIM2 DMA DeInit */
+    HAL_DMA_DeInit(tim_baseHandle->hdma[TIM_DMA_ID_CC2]);
+    HAL_DMA_DeInit(tim_baseHandle->hdma[TIM_DMA_ID_CC4]);
+    HAL_DMA_DeInit(tim_baseHandle->hdma[TIM_DMA_ID_CC3]);
 
     /* TIM2 interrupt Deinit */
     HAL_NVIC_DisableIRQ(TIM2_IRQn);

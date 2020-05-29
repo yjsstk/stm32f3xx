@@ -74,7 +74,7 @@ static void adc_value_deal(void *parg, uint16_t size)
 	
 	if (padc_value_change_cb != NULL)
 	{
-		padc_value_change_cb(adc_add_sum[0], adc_add_sum[1]);
+		padc_value_change_cb(adc_add_sum[1], adc_add_sum[0]);
 	}
 }
 

@@ -132,6 +132,7 @@ CONFIG_RESULT_T app_scheduler_put(
 		app_scheduler_msg[index].arg_size = arg_size;
 		memcpy(app_scheduler_msg[index].arg_buff, parg, arg_size);
 	}
+	return RESULT_SUCCESS;
 }
 
 /** @brief   获取调度器中的信息

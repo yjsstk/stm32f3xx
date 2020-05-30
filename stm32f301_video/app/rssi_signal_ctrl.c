@@ -61,7 +61,7 @@ static volatile rssi_status_t rssi_status;
  */
 static void rssi_pin22_delay_ctrl(void)
 {
-	PIN12_VIDEO_SEL_T sw_sel = rssi_pin12_cur_status;
+//	PIN12_VIDEO_SEL_T sw_sel = rssi_pin12_cur_status;
 	
 	uint16_t top_standard_adc = rssi_status.rssi_top_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
 	uint16_t bot_standard_adc = rssi_status.rssi_bot_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
@@ -148,6 +148,7 @@ static void rssi_video_sw_ctrl_deal(void)
  */
 static uint8_t rssi_video_sw_switch_detect(void)
 {	
+	static uint8_t switch_bk=0xFF;
 	uint8_t sw_sitch=0xFF;
 	
 	uint16_t top_standard_adc = rssi_status.rssi_top_min + RSSI_VCC_TO_ADC(RSSI_NORMAL_UP_VCC);
@@ -183,6 +184,15 @@ static uint8_t rssi_video_sw_switch_detect(void)
 				sw_sitch = 6;
 			}
 		}
+	}
+	if (switch_bk != sw_sitch)
+	{
+		switch_bk = sw_sitch;
+		DEBUG_INFO("Ti: %d, Bi: %d, Ts: %d, Bs: %d", 
+		    rssi_status.rssi_top_min, rssi_status.rssi_bot_min,
+		    top_standard_adc, bot_standard_adc);
+		DEBUG_INFO("Ta: %d, Ba: %d, sw: %d", 
+	            rssi_status.rssi_top_avg, rssi_status.rssi_bot_avg, sw_sitch);
 	}
 	
 	return sw_sitch;
@@ -244,12 +254,12 @@ static void rssi_scheduler_event_handle(void *parg, uint16_t arg_size)
 	 && (rssi_status.rssi_bot_avg >= bot_standard_adc))
 	{
 		rssi_pin30_next_status = PIN30_VIDEO_CTRL_BY_HW;
-		DEBUG_INFO("next_status: HW");
+//		DEBUG_INFO("next_status: HW");
 	}
 	else
 	{
 		rssi_pin30_next_status = PIN30_VIDEO_CTRL_BY_SW;
-		DEBUG_INFO("next_status: SW");
+//		DEBUG_INFO("next_status: SW");
 	}
 }
 
@@ -274,6 +284,7 @@ static void rssi_calibration_notify_cb(void)
 {	
 	rssi_status.rssi_top_min = rssi_status.rssi_top_avg;
 	rssi_status.rssi_bot_min = rssi_status.rssi_bot_avg;
+	DEBUG_INFO("top_min: %d, bot_min: %d", rssi_status.rssi_top_min, rssi_status.rssi_bot_min);
 }
 
 /** @brief   1ms回调函数
@@ -289,6 +300,7 @@ static void rssi_time_1ms_cb(void *pcontent)
 		{			
 //			if (rssi_switch_time_cnt >= RSSI_VIDEO_DELAY_SWITCH_MS)
 			{
+				DEBUG_INFO("Ta: %d, Ba: %d", rssi_status.rssi_top_avg, rssi_status.rssi_bot_avg);
 				rssi_pin30_cur_status = PIN30_VIDEO_CTRL_BY_HW;
 				DEBUG_INFO("video switch by hw");
 				dac_set_output_vcc(DAC_OUTPUT_VCC);

@@ -10,7 +10,7 @@
 
 #include "config.h"
 #if (CONFIG_DEBUG_EN == 1)
-#define DEBUG_INFO_EN       0
+#define DEBUG_INFO_EN       1
 #define DEBUG_MODULE_NAME   "PIN25"
 #endif
 #include "debug.h"

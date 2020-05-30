@@ -9,7 +9,7 @@
 
 #include "config.h"
 #if (CONFIG_DEBUG_EN == 1)
-#define DEBUG_INFO_EN       1
+#define DEBUG_INFO_EN       0
 #define DEBUG_MODULE_NAME   "rssi"
 #endif
 #include "debug.h"
@@ -95,19 +95,19 @@ static void rssi_video_sw_ctrl_deal(void)
 	{
 		sw_sel = PIN12_SEL_VI1_TOP;
 		
-		pin22_output_ctrl(GPIO_PIN_RESET);
+//		pin22_output_ctrl(GPIO_PIN_RESET);
 		dac_set_output_vcc(DAC_OUTPUT_VCC);
 	}
 	else if (rssi_status.rssi_bot_avg >= bot_standard_adc) 
 	{
 		sw_sel = PIN12_SEL_VI2_BOT;
 		
-		pin22_output_ctrl(GPIO_PIN_RESET);
+//		pin22_output_ctrl(GPIO_PIN_RESET);
 		dac_set_output_vcc(DAC_OUTPUT_VCC);
 	}
 	else
 	{
-		pin22_output_ctrl(GPIO_PIN_SET);
+//		pin22_output_ctrl(GPIO_PIN_SET);
 		dac_set_output_vcc(0);
 		if (rssi_status.rssi_top_avg <= rssi_status.rssi_top_min)
 		{

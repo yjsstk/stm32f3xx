@@ -32,6 +32,16 @@ CONFIG_RESULT_T pin27_ctrl_init(void)
 	// 总是输出低电平
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
 	
+	/////////////////
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+
+	GPIO_InitStruct.Pin   = GPIO_PIN_2;
+	GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull  = GPIO_PULLUP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct); 
+	
 	return RESULT_SUCCESS;
 }
 

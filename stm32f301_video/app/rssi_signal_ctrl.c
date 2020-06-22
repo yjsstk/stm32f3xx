@@ -108,7 +108,7 @@ static void rssi_video_sw_ctrl_deal(void)
 	else
 	{
 		pin22_output_ctrl(GPIO_PIN_SET);
-		dac_set_output_vcc(0);
+//		dac_set_output_vcc(0);
 		if (rssi_status.rssi_top_avg <= rssi_status.rssi_top_min)
 		{
 			sw_sel = PIN12_SEL_VI2_BOT;

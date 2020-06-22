@@ -22,6 +22,7 @@ typedef void (*padc_value_change_cb_t)(uint16_t channel1, uint16_t channel2);
  *  @return  无
  *  @note    
  */
+
 extern void adc_value_change_reg(padc_value_change_cb_t func);
 	
 /** @brief   该模块的应用初始化函数 
@@ -32,6 +33,8 @@ extern void adc_value_change_reg(padc_value_change_cb_t func);
 extern CONFIG_RESULT_T adc_init(void);
 
 extern void adc_dma_isr_cb(void);
+
+//extern void adc_isr_handle_cb(void);
 
 #endif
 

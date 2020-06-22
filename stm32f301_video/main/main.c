@@ -89,16 +89,18 @@ void scheduler_test(void *parg, uint16_t size)
 void systic_test(void *pcontent)
 {
 	static uint32_t main_run_count=0;
-	if ((main_run_count++ % 1000) == 0)
-	{
-		uint32_t test = main_run_count / 1000;
-		app_scheduler_put(scheduler_test, &test, sizeof(test));
-	}
+//	if ((main_run_count++ % 1000) == 0)
+//	{
+//		uint32_t test = main_run_count / 1000;
+//		app_scheduler_put(scheduler_test, &test, sizeof(test));
+//	}
 	
 //	if ((main_run_count % 500) == 0)
-//	{
-//		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
-//	}
+	//if (++main_run_count % 10 == 0)
+	{
+		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_2);
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_4);
+	}
 }
 
 /**
@@ -130,19 +132,19 @@ int main(void)
 	
 	app_scheduler_init();
 	
-	pin12_ctrl_init();
-	pin30_ctrl_init();
-	pin25_ctrl_init();
-	pin24_ctrl_init();
+//	pin12_ctrl_init();
+//	pin30_ctrl_init();
+//	pin25_ctrl_init();
+//	pin24_ctrl_init();
 	pin27_ctrl_init();
-	pin22_ctrl_init();
-	rssi_signal_ctrl_init();
+//	pin22_ctrl_init();
+//	rssi_signal_ctrl_init();
 //	sync_head_ctrl_init();
 	pwm_ctrl_init();
-	adc_init();
+//	adc_init();
     
-    MX_COMP2_Init();
-    MX_DAC_Init();
+//    MX_COMP2_Init();
+//    MX_DAC_Init();
     MX_TIM2_Init();
 	
 	#if (CONFIG_WATCHDOG_EN == 1)

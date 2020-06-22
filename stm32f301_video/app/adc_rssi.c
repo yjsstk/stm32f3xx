@@ -108,18 +108,28 @@ void adc_value_change_reg(padc_value_change_cb_t func)
  *  @return  无
  *  @note    
  */
+uint32_t test_buff[ADC_CHANNEL_NUMB];
 static void adc_sample_1ms_cb(void *pcontent)
 {
-	static uint8_t sample_time_ctrl=0;
-	
-	if (sample_time_ctrl++ >= 2)
+	for (uint8_t i=0; i<ADC_CHANNEL_NUMB; i++)
 	{
-		sample_time_ctrl = 0;
-		HAL_ADC_Start_DMA(&AdcHandle,
-						  (uint32_t *)adc_dma_buff,
-						   ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN
-						   );
+		HAL_ADC_Start(&AdcHandle);
+		HAL_ADC_PollForConversion(&AdcHandle,0xffff);//等待ADC转换完成
+		test_buff[i] = HAL_ADC_GetValue(&AdcHandle);
 	}
+	HAL_ADC_Stop(&AdcHandle);
+	
+	
+//	static uint8_t sample_time_ctrl=0;
+//	
+//	if (sample_time_ctrl++ >= 2)
+//	{
+//		sample_time_ctrl = 0;
+//		HAL_ADC_Start_DMA(&AdcHandle,
+//						  (uint32_t *)adc_dma_buff,
+//						   ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN
+//						   );
+//	}
 }
 
 /** @brief   该模块的应用初始化函数 
@@ -185,8 +195,8 @@ CONFIG_RESULT_T adc_init(void)
 	__HAL_LINKDMA(&AdcHandle, DMA_Handle, DmaHandle);
 
 	/* NVIC configuration for DMA Input data interrupt */
-	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 3, 0);
-	HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn); 
+//	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 3, 0);
+//	HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn); 
 
 //	HAL_NVIC_SetPriority(ADC1_IRQn, 3, 0);
 //	HAL_NVIC_EnableIRQ(ADC1_IRQn);
@@ -202,7 +212,7 @@ CONFIG_RESULT_T adc_init(void)
 	/* ### - 3 - Channel configuration ######################################## */
 	sConfig.Channel      = ADC_CHANNEL_1;                /* Sampled channel number */
 	sConfig.Rank         = ADC_REGULAR_RANK_1;          /* Rank of sampled channel number ADCx_CHANNEL */
-	sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;   /* Sampling time (number of clock cycles unit) */
+	sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;   /* Sampling time (number of clock cycles unit) */
 	sConfig.SingleDiff   = ADC_SINGLE_ENDED;            /* Single-ended input channel */
 	sConfig.OffsetNumber = ADC_OFFSET_NONE;             /* No offset subtraction */ 
 	sConfig.Offset = 0;                                 /* Parameter discarded because offset correction is disabled */
@@ -219,14 +229,14 @@ CONFIG_RESULT_T adc_init(void)
 	}
 
 	/* ### - 4 - Start conversion in DMA mode ################################# */
-	if (HAL_ADC_Start_DMA(&AdcHandle,
-						(uint32_t *)adc_dma_buff,
-						ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN
-					   ) != HAL_OK)
-	{
-		return RESULT_ERROR;
-	}
-	
+//	if (HAL_ADC_Start_DMA(&AdcHandle,
+//						(uint32_t *)adc_dma_buff,
+//						ADC_CHANNEL_NUMB * ADC_DMA_BUFF_LEN
+//					   ) != HAL_OK)
+//	{
+//		return RESULT_ERROR;
+//	}
+
 	systick_1ms_cb_reg(adc_sample_1ms_cb);
   
 	return RESULT_SUCCESS;

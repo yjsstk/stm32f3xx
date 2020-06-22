@@ -23,6 +23,9 @@
 /* USER CODE BEGIN 0 */
 #include "debug.h"
 #include "stdbool.h"
+
+static volatile uint32_t pa8_low  = (1 << 24);
+static volatile uint32_t pa8_high = (1 << 8);
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim2;
@@ -55,62 +58,32 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+//  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+//  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+//  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;//TIM_INPUTCHANNELPOLARITY_RISING;
   sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV2;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
   sConfigIC.ICFilter = 0;
   if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_3) != HAL_OK)
   {
     Error_Handler();
   }
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;//TIM_INPUTCHANNELPOLARITY_FALLING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter = 3;//3
+  sConfigIC.ICFilter = 0;//3
   if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
   }
   
-  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_4);
-  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_3);
-  //HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4);
-  HAL_TIM_Base_Start_IT(&htim2);
-
-}
-
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
-{
-
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  if(tim_baseHandle->Instance==TIM2)
-  {
-  /* USER CODE BEGIN TIM2_MspInit 0 */
-    volatile uint32_t pa8_low = (1 << 24);
-    volatile uint32_t pa8_high = (1 << 8);
-  /* USER CODE END TIM2_MspInit 0 */
-    /* TIM2 clock enable */
-    __HAL_RCC_TIM2_CLK_ENABLE();
-  
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-		
-
-    /**TIM2 GPIO Configuration    
-    PA3     ------> TIM2_CH4 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
+  __HAL_RCC_DMA1_CLK_ENABLE();
+  /////
+  #if 1
     /* TIM2 DMA Init */
     /* TIM2_CH2_CH4 Init */
     hdma_tim2_ch2_ch4.Instance = DMA1_Channel7;
@@ -121,8 +94,9 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     hdma_tim2_ch2_ch4.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_tim2_ch2_ch4.Init.Mode = DMA_CIRCULAR;
     hdma_tim2_ch2_ch4.Init.Priority = DMA_PRIORITY_VERY_HIGH;
-    hdma_tim2_ch2_ch4.Instance->CPAR =(uint32_t)&pa8_low;
-    hdma_tim2_ch2_ch4.Instance->CMAR = (uint32_t)&GPIOA->BSRR;
+    hdma_tim2_ch2_ch4.Instance->CPAR = (uint32_t)&GPIOA->BSRR;
+    hdma_tim2_ch2_ch4.Instance->CMAR = (uint32_t)&pa8_high;
+	hdma_tim2_ch2_ch4.Instance->CNDTR = 0;
     if (HAL_DMA_Init(&hdma_tim2_ch2_ch4) != HAL_OK)
     {
       Error_Handler();
@@ -130,8 +104,8 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 
     /* Several peripheral DMA handle pointers point to the same DMA handle.
      Be aware that there is only one channel to perform all the requested DMAs. */
-    __HAL_LINKDMA(tim_baseHandle,hdma[TIM_DMA_ID_CC2],hdma_tim2_ch2_ch4);
-    __HAL_LINKDMA(tim_baseHandle,hdma[TIM_DMA_ID_CC4],hdma_tim2_ch2_ch4);
+    //__HAL_LINKDMA(tim_baseHandle,hdma[TIM_DMA_ID_CC2],hdma_tim2_ch2_ch4);
+    __HAL_LINKDMA(&htim2,hdma[TIM_DMA_ID_CC4],hdma_tim2_ch2_ch4);
 
     /* TIM2_CH3 Init */
     hdma_tim2_ch3.Instance = DMA1_Channel1;
@@ -142,21 +116,82 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     hdma_tim2_ch3.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_tim2_ch3.Init.Mode = DMA_CIRCULAR;
     hdma_tim2_ch3.Init.Priority = DMA_PRIORITY_VERY_HIGH;
-    hdma_tim2_ch3.Instance->CPAR =(uint32_t)&pa8_low;
-    hdma_tim2_ch3.Instance->CMAR = (uint32_t)&GPIOA->BSRR;
+    hdma_tim2_ch3.Instance->CPAR = (uint32_t)&GPIOA->BSRR;
+    hdma_tim2_ch3.Instance->CMAR = (uint32_t)&pa8_low;
+	hdma_tim2_ch3.Instance->CNDTR = 0;
     if (HAL_DMA_Init(&hdma_tim2_ch3) != HAL_OK)
     {
       Error_Handler();
     }
 
-    __HAL_LINKDMA(tim_baseHandle,hdma[TIM_DMA_ID_CC3],hdma_tim2_ch3);
+    __HAL_LINKDMA(&htim2,hdma[TIM_DMA_ID_CC3],hdma_tim2_ch3);
+	
+	
 
     /* TIM2 interrupt Init */
-    HAL_NVIC_SetPriority(TIM2_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(TIM2_IRQn);
+//    HAL_NVIC_SetPriority(TIM2_IRQn, 1, 0);
+//    HAL_NVIC_EnableIRQ(TIM2_IRQn);
   /* USER CODE BEGIN TIM2_MspInit 1 */
 
   /* USER CODE END TIM2_MspInit 1 */
+	
+	
+	//HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_3, (uint32_t *)&GPIOA->BSRR, 1);
+	
+	// htim2.State = HAL_TIM_STATE_READY;
+	
+	//HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_4, (uint32_t *)&GPIOA->BSRR, 1);
+	
+	
+	
+	HAL_DMA_Start(htim2.hdma[TIM_DMA_ID_CC3], (uint32_t)&pa8_low, (uint32_t)(uint32_t *)&GPIOA->BSRR, 1);
+	HAL_DMA_Start(htim2.hdma[TIM_DMA_ID_CC4], (uint32_t)&pa8_high, (uint32_t)(uint32_t *)&GPIOA->BSRR, 1);
+
+      /* Enable the TIM Capture/Compare 3  DMA request */
+	  htim2.Instance->DIER |= (TIM_DMA_CC3 | TIM_DMA_CC4);
+	
+	#endif
+  /////////
+  
+//  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_4);
+//  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_3);
+//    HAL_NVIC_SetPriority(TIM2_IRQn, 1, 0);
+//    HAL_NVIC_EnableIRQ(TIM2_IRQn);
+  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_4);
+  HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_3);
+// HAL_TIM_Base_Start(&htim2);
+
+}
+extern void MX_DMA_Init(void) ;
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
+{
+
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  if(tim_baseHandle->Instance==TIM2)
+  {
+  /* USER CODE BEGIN TIM2_MspInit 0 */
+    
+  /* USER CODE END TIM2_MspInit 0 */
+    /* TIM2 clock enable */
+    __HAL_RCC_TIM2_CLK_ENABLE();
+  
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+		
+	__HAL_RCC_DMA1_CLK_ENABLE();
+    /**TIM2 GPIO Configuration    
+    PA3     ------> TIM2_CH4 
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	  
+	
+//	MX_DMA_Init() ;
+
   }
 }
 
@@ -327,6 +362,21 @@ uint32_t g_cap_value[100] = {0};
 static uint16_t m_cap_index = 0;
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
+	return ;
+	
+	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+		//GPIOA->BSRR = pa8_high;
+	}
+	else if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
+	{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+		//GPIOA->BSRR = pa8_low;
+	}
+	
+	return ;
+	
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
 		{
             capture_sync_head(htim->Instance->CCR4, capture_head_evt_handler);
@@ -338,6 +388,11 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
             }
             g_cap_value[m_cap_index] = htim->Instance->CCR4;
 
+		}
+		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
+		{
+			static uint8_t tick = 0;
+			tick++;
 		}
 }
 

@@ -26,7 +26,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-#define DAC_OUTPUT_VCC        0.55                   // DAC输出电压，单位V
+#define DAC_OUTPUT_VCC        1.0//0.55                   // DAC输出电压，单位V
 #define DAC_VCC_TO_VAL(VCC)  ((VCC) * 4096 / 3.3)    // 设定电压值转为DAC的输出值
 
 /** @brief   设置DAC输出电压值

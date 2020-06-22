@@ -193,7 +193,7 @@ void DMA1_Channel1_IRQHandler(void)
 
 //void ADC1_IRQHandler(void)
 //{
-//	adc_dma_isr_cb();
+//	adc_isr_handle_cb();
 //}
 
 /******************************************************************************/
